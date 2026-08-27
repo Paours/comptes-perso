@@ -21,49 +21,58 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
-    body { background: var(--bg-gradient); color: #0f172a; padding: 20px 16px; min-height: 100vh; max-width: 1000px; margin: 0 auto; }
+    body { background: var(--bg-gradient); color: #0f172a; padding: 12px 10px; min-height: 100vh; max-width: 1000px; margin: 0 auto; }
     
-    h1 { font-size: 2.2rem; margin-bottom: 20px; color: #ffffff; font-weight: 900; text-align: center; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 3px 10px rgba(0,0,0,0.3); }
+    h1 { font-size: 1.8rem; margin-bottom: 16px; color: #ffffff; font-weight: 900; text-align: center; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 3px 10px rgba(0,0,0,0.3); }
 
-    .tabs { display: flex; gap: 12px; margin-bottom: 20px; }
-    .tab-btn { flex: 1; padding: 16px; border: none; background: rgba(255, 255, 255, 0.1); border-radius: 16px; font-weight: 800; font-size: 1.05rem; color: #ffffff; cursor: pointer; transition: all 0.3s ease; backdrop-filter: blur(10px); border: 2px solid rgba(255,255,255,0.15); }
-    .tab-btn.active { background: #3b82f6; color: #ffffff; box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4); transform: translateY(-3px); border-color: #60a5fa; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    .tab-btn { flex: 1; padding: 14px 8px; border: none; background: rgba(255, 255, 255, 0.1); border-radius: 14px; font-weight: 800; font-size: 0.95rem; color: #ffffff; cursor: pointer; transition: all 0.3s ease; backdrop-filter: blur(10px); border: 2px solid rgba(255,255,255,0.15); text-align: center; }
+    .tab-btn.active { background: #3b82f6; color: #ffffff; box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4); border-color: #60a5fa; }
 
-    .card { background: var(--card-bg); border-radius: 20px; padding: 24px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3); margin-bottom: 24px; }
+    .card { background: var(--card-bg); border-radius: 16px; padding: 16px; box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3); margin-bottom: 16px; }
     
-    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px; }
-    input { padding: 14px; border: 2px solid #cbd5e1; border-radius: 12px; font-size: 1rem; font-weight: 600; outline: none; width: 100%; transition: all 0.2s; background: #f8fafc; }
-    input:focus { border-color: #3b82f6; background: #ffffff; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2); }
-    .btn-add { background: var(--primary-grad); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 1.1rem; cursor: pointer; padding: 16px; transition: all 0.2s ease; width: 100%; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4); }
-    .btn-add:hover { transform: scale(1.01); box-shadow: 0 10px 25px rgba(37, 99, 235, 0.6); }
+    .form-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 12px; }
+    @media (min-width: 600px) {
+      .form-grid { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+    }
 
-    .table-container { overflow-x: auto; border-radius: 12px; }
-    table { width: 100%; border-collapse: collapse; font-size: 1rem; }
-    th { text-align: left; padding: 16px 12px; color: #ffffff; font-weight: 800; background: #1e293b; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px; }
-    td { padding: 14px 12px; border-bottom: 2px solid #f1f5f9; font-weight: 600; }
+    input { padding: 14px; border: 2px solid #cbd5e1; border-radius: 10px; font-size: 1rem; font-weight: 600; outline: none; width: 100%; transition: all 0.2s; background: #f8fafc; -webkit-appearance: none; }
+    input:focus { border-color: #3b82f6; background: #ffffff; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
+    
+    .btn-add { background: var(--primary-grad); color: white; border: none; border-radius: 10px; font-weight: 800; font-size: 1rem; cursor: pointer; padding: 14px; transition: all 0.2s ease; width: 100%; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 6px 15px rgba(37, 99, 235, 0.4); }
+    .btn-add:active { transform: scale(0.98); }
+
+    .table-container { overflow-x: auto; border-radius: 10px; -webkit-overflow-scrolling: touch; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; min-width: 500px; }
+    th { text-align: left; padding: 12px 8px; color: #ffffff; font-weight: 800; background: #1e293b; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px; }
+    td { padding: 12px 8px; border-bottom: 1px solid #f1f5f9; font-weight: 600; }
     tr:hover td { background-color: #f8fafc; }
     
-    .row-charges-total { background-color: var(--warning-bg) !important; border-left: 6px solid #f59e0b; }
-    .row-charges-estime { background-color: var(--info-bg) !important; border-left: 6px solid #3b82f6; }
+    .row-charges-total { background-color: var(--warning-bg) !important; border-left: 4px solid #f59e0b; }
+    .row-charges-estime { background-color: var(--info-bg) !important; border-left: 4px solid #3b82f6; }
 
-    .amount { text-align: right; white-space: nowrap; font-family: 'Courier New', monospace; font-size: 1.1rem; font-weight: 800; }
-    .amount-plus { color: #10b981; background: var(--success-bg); padding: 4px 8px; border-radius: 8px; display: inline-block; }
-    .amount-minus { color: var(--danger); background: var(--danger-bg); padding: 4px 8px; border-radius: 8px; display: inline-block; }
+    .amount { text-align: right; white-space: nowrap; font-family: 'Courier New', monospace; font-size: 0.95rem; font-weight: 800; }
+    .amount-plus { color: #10b981; background: var(--success-bg); padding: 3px 6px; border-radius: 6px; display: inline-block; }
+    .amount-minus { color: var(--danger); background: var(--danger-bg); padding: 3px 6px; border-radius: 6px; display: inline-block; }
     .negative { color: var(--danger); font-weight: 900; }
     .center { text-align: center; }
 
-    .summary { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; align-items: center; background: #0f172a; border-radius: 14px; padding: 18px 24px; margin-top: 20px; font-weight: 800; color: #ffffff; font-size: 1rem; box-shadow: 0 8px 20px rgba(15, 23, 42, 0.4); }
-    .summary-val { font-size: 1.4rem; font-family: 'Courier New', monospace; color: #38bdf8; text-shadow: 0 0 10px rgba(56, 189, 248, 0.5); }
+    .summary { display: flex; flex-direction: column; gap: 8px; background: #0f172a; border-radius: 12px; padding: 14px; margin-top: 16px; font-weight: 800; color: #ffffff; font-size: 0.9rem; box-shadow: 0 6px 15px rgba(15, 23, 42, 0.4); }
+    @media (min-width: 600px) {
+      .summary { flex-direction: row; justify-content: space-between; align-items: center; }
+    }
+    .summary-val { font-size: 1.2rem; font-family: 'Courier New', monospace; color: #38bdf8; text-shadow: 0 0 8px rgba(56, 189, 248, 0.5); }
 
-    .btn-del { background: #fef2f2; border: none; color: var(--danger); border-radius: 8px; cursor: pointer; font-size: 1.1rem; padding: 6px 12px; font-weight: 900; transition: 0.2s; }
-    .btn-del:hover { background: var(--danger); color: white; transform: scale(1.1); }
-    
-    input[type="checkbox"] { width: 22px; height: 22px; accent-color: #3b82f6; cursor: pointer; vertical-align: middle; }
+    .btn-del { background: #fef2f2; border: none; color: var(--danger); border-radius: 6px; cursor: pointer; font-size: 1rem; padding: 6px 10px; font-weight: 900; }
+    input[type="checkbox"] { width: 24px; height: 24px; accent-color: #3b82f6; cursor: pointer; vertical-align: middle; }
+
+    .sync-status { text-align: center; color: #a7f3d0; font-size: 0.8rem; font-weight: 700; margin-top: -10px; margin-bottom: 12px; }
   </style>
 </head>
 <body>
 
   <h1>💳 Mes Comptes 💳</h1>
+  <div class="sync-status" id="sync-status">🟢 Synchronisation Firebase Active</div>
 
   <div class="tabs">
     <button class="tab-btn active" onclick="switchPage('page1')">Dépenses & Revenus</button>
@@ -90,38 +99,60 @@
     <div class="summary" id="summary-bar"></div>
   </div>
 
-  <script>
-    let currentPage = 'page1';
-    
-    let data = JSON.parse(localStorage.getItem('comptes_remi_data')) || {
-      page1: [],
-      page2: []
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCHh9JL1E3Trgxv-XGdoCyR8Ay8SIWepBo",
+      authDomain: "mes-comptes-7a597.firebaseapp.com",
+      databaseURL: "https://mes-comptes-7a597-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "mes-comptes-7a597",
+      storageBucket: "mes-comptes-7a597.firebasestorage.app",
+      messagingSenderId: "364718028394",
+      appId: "1:364718028394:web:0ab4cc30259b4fe477fc13"
     };
 
-    const form = document.getElementById('transaction-form');
-    const formFields = document.getElementById('form-fields');
-    const tableHead = document.getElementById('table-head');
-    const tableBody = document.getElementById('table-body');
-    const summaryBar = document.getElementById('summary-bar');
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const dbRef = ref(db, 'comptes_data');
+
+    let currentPage = 'page1';
+    let data = { page1: [], page2: [] };
+
+    // Écoute en direct des changements Firebase
+    onValue(dbRef, (snapshot) => {
+      const val = snapshot.val();
+      if (val) {
+        data = {
+          page1: val.page1 || [],
+          page2: val.page2 || []
+        };
+      }
+      render();
+    });
 
     function save() {
-      localStorage.setItem('comptes_remi_data', JSON.stringify(data));
+      set(dbRef, data);
     }
 
-    function switchPage(page) {
+    window.switchPage = function(page) {
       currentPage = page;
       document.querySelectorAll('.tab-btn').forEach((btn, index) => {
         btn.classList.toggle('active', (page === 'page1' && index === 0) || (page === 'page2' && index === 1));
       });
       updateFormAndHead();
       render();
-    }
+    };
 
     function updateFormAndHead() {
+      const formFields = document.getElementById('form-fields');
+      const tableHead = document.getElementById('table-head');
+
       if (currentPage === 'page1') {
         formFields.innerHTML = `
           <input type="date" id="date" required>
-          <input type="text" id="cheque" placeholder="Chèque (facultatif)">
+          <input type="text" id="cheque" placeholder="Chèque (optionnel)">
           <input type="text" id="ordre" placeholder="Libellé / Ordre" required>
           <input type="number" step="0.01" id="retrait" placeholder="Retrait (€)">
           <input type="number" step="0.01" id="versement" placeholder="Versement (€)">
@@ -139,24 +170,31 @@
       } else {
         const allChecked = data.page2.length > 0 && data.page2.every(t => t.pointage);
         formFields.innerHTML = `
-          <input type="text" id="cheque" placeholder="Chèque (facultatif)">
+          <input type="text" id="cheque" placeholder="Chèque (optionnel)">
           <input type="text" id="ordre" placeholder="Nom de la charge (ex: Loyer...)" required>
           <input type="number" step="0.01" id="retrait" placeholder="Montant Mensuel (€)" required>
         `;
         tableHead.innerHTML = `
           <th>Chèque</th>
           <th>Nom de la Charge</th>
-          <th class="amount">Montant Mensuel</th>
+          <th class="amount">Montant</th>
           <th class="center">
-            Pointé tout 
-            <input type="checkbox" id="toggle-all-charges" ${allChecked ? 'checked' : ''} onchange="toggleAllCharges(this.checked)" title="Tout cocher / Tout décocher">
+            Tout 
+            <input type="checkbox" id="toggle-all-charges" ${allChecked ? 'checked' : ''}>
           </th>
           <th class="center">Action</th>
         `;
+        
+        setTimeout(() => {
+          const toggleAll = document.getElementById('toggle-all-charges');
+          if (toggleAll) {
+            toggleAll.onchange = (e) => toggleAllCharges(e.target.checked);
+          }
+        }, 50);
       }
     }
 
-    form.addEventListener('submit', (e) => {
+    document.getElementById('transaction-form').addEventListener('submit', (e) => {
       e.preventDefault();
       
       const newEntry = {
@@ -174,30 +212,24 @@
 
       data[currentPage].push(newEntry);
       save();
-      form.reset();
-      render();
+      e.target.reset();
     });
 
-    function togglePointage(id, pageSource) {
+    window.togglePointage = function(id, pageSource) {
       const page = pageSource || currentPage;
       data[page] = data[page].map(t => t.id === id ? { ...t, pointage: !t.pointage } : t);
       save();
-      updateFormAndHead();
-      render();
-    }
+    };
 
     function toggleAllCharges(status) {
       data.page2 = data.page2.map(t => ({ ...t, pointage: status }));
       save();
-      render();
     }
 
-    function deleteTransaction(id) {
+    window.deleteTransaction = function(id) {
       data[currentPage] = data[currentPage].filter(t => t.id !== id);
       save();
-      updateFormAndHead();
-      render();
-    }
+    };
 
     function getTotalCharges() {
       return data.page2.reduce((total, t) => total + t.retrait, 0);
@@ -208,7 +240,10 @@
     }
 
     function render() {
+      const tableBody = document.getElementById('table-body');
+      const summaryBar = document.getElementById('summary-bar');
       tableBody.innerHTML = '';
+      
       let currentSolde = 0;
       const totalCharges = getTotalCharges();
       const chargesPointees = getTotalChargesPointees();
@@ -227,7 +262,6 @@
           </tr>
         `;
 
-        // Ligne des charges réellement prélevées (pointées)
         if (totalCharges > 0) {
           currentSolde -= chargesPointees;
 
@@ -270,7 +304,6 @@
           tableBody.appendChild(row);
         });
 
-        // Calcul et affichage du solde final estimé si 100% des charges étaient déduites
         const chargesRestantes = totalCharges - chargesPointees;
         const soldeApresToutesCharges = currentSolde - chargesRestantes;
 
@@ -290,8 +323,8 @@
         }
 
         summaryBar.innerHTML = `
-          <span>Solde Réel Actuel : <strong class="summary-val ${currentSolde < 0 ? 'negative' : ''}">${currentSolde.toFixed(2)} €</strong></span>
-          <span>Solde Fin de Mois (toutes charges déduites) : <strong class="summary-val ${soldeApresToutesCharges < 0 ? 'negative' : ''}">${soldeApresToutesCharges.toFixed(2)} €</strong></span>
+          <div>Solde Réel : <span class="summary-val ${currentSolde < 0 ? 'negative' : ''}">${currentSolde.toFixed(2)} €</span></div>
+          <div>Solde Estimé Fin de Mois : <span class="summary-val ${soldeApresToutesCharges < 0 ? 'negative' : ''}">${soldeApresToutesCharges.toFixed(2)} €</span></div>
         `;
 
       } else {
@@ -312,14 +345,13 @@
         });
 
         summaryBar.innerHTML = `
-          <span>Total des charges mensuelles : <strong>-${totalCharges.toFixed(2)} €</strong></span>
-          <span>Prélevées : <strong style="color: #38bdf8;">-${chargesPointees.toFixed(2)} €</strong></span>
+          <div>Total Charges : <strong>-${totalCharges.toFixed(2)} €</strong></div>
+          <div>Prélevées : <strong style="color: #38bdf8;">-${chargesPointees.toFixed(2)} €</strong></div>
         `;
       }
     }
 
     updateFormAndHead();
-    render();
   </script>
 </body>
 </html>

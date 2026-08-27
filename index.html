@@ -76,7 +76,7 @@
 
   <div class="tabs">
     <button class="tab-btn active" onclick="switchPage('page1')">Dépenses & Revenus</button>
-    <button class="tab-btn" onclick="switchPage('page2')">Charges Mensuelles</button>
+    <button class="tab-btn" onclick="switchPage('page2')">Fixes & Mensuels</button>
   </div>
 
   <div class="card">
@@ -120,7 +120,6 @@
     let currentPage = 'page1';
     let data = { page1: [], page2: [] };
 
-    // Écoute en direct des changements Firebase
     onValue(dbRef, (snapshot) => {
       const val = snapshot.val();
       if (val) {
@@ -171,13 +170,15 @@
         const allChecked = data.page2.length > 0 && data.page2.every(t => t.pointage);
         formFields.innerHTML = `
           <input type="text" id="cheque" placeholder="Chèque (optionnel)">
-          <input type="text" id="ordre" placeholder="Nom de la charge (ex: Loyer...)" required>
-          <input type="number" step="0.01" id="retrait" placeholder="Montant Mensuel (€)" required>
+          <input type="text" id="ordre" placeholder="Nom de l'opération" required>
+          <input type="number" step="0.01" id="retrait" placeholder="Charge / Débit (€)">
+          <input type="number" step="0.01" id="versement" placeholder="Revenu / Crédit (€)">
         `;
         tableHead.innerHTML = `
           <th>Chèque</th>
-          <th>Nom de la Charge</th>
-          <th class="amount">Montant</th>
+          <th>Nom / Libellé</th>
+          <th class="amount">Charge (-</th>
+          <th class="amount">Revenu (+)</th>
           <th class="center">
             Tout 
             <input type="checkbox" id="toggle-all-charges" ${allChecked ? 'checked' : ''}>
@@ -202,7 +203,7 @@
         cheque: document.getElementById('cheque').value,
         ordre: document.getElementById('ordre').value,
         retrait: parseFloat(document.getElementById('retrait').value) || 0,
-        versement: currentPage === 'page1' ? (parseFloat(document.getElementById('versement').value) || 0) : 0,
+        versement: parseFloat(document.getElementById('versement').value) || 0,
         pointage: false
       };
 
@@ -231,12 +232,14 @@
       save();
     };
 
-    function getTotalCharges() {
-      return data.page2.reduce((total, t) => total + t.retrait, 0);
+    // Calcule l'impact net total de la feuille 2 (Versemens - Retraits)
+    function getNetChargesTotal() {
+      return data.page2.reduce((total, t) => total + (t.versement - t.retrait), 0);
     }
 
-    function getTotalChargesPointees() {
-      return data.page2.filter(t => t.pointage).reduce((total, t) => total + t.retrait, 0);
+    // Calcule l'impact net des éléments pointés de la feuille 2
+    function getNetChargesPointees() {
+      return data.page2.filter(t => t.pointage).reduce((total, t) => total + (t.versement - t.retrait), 0);
     }
 
     function render() {
@@ -245,8 +248,8 @@
       tableBody.innerHTML = '';
       
       let currentSolde = 0;
-      const totalCharges = getTotalCharges();
-      const chargesPointees = getTotalChargesPointees();
+      const netChargesTotal = getNetChargesTotal();
+      const netChargesPointees = getNetChargesPointees();
 
       if (currentPage === 'page1') {
         tableBody.innerHTML += `
@@ -262,16 +265,16 @@
           </tr>
         `;
 
-        if (totalCharges > 0) {
-          currentSolde -= chargesPointees;
+        if (data.page2.length > 0) {
+          currentSolde += netChargesPointees;
 
           tableBody.innerHTML += `
             <tr class="row-charges-total">
               <td style="color: var(--text-muted)">—</td>
               <td style="color: var(--text-muted)">—</td>
-              <td><strong style="color: #b45309;">Charges Prélevées (pointées)</strong></td>
-              <td class="amount"><span class="amount-minus">-${chargesPointees.toFixed(2)} €</span></td>
-              <td class="amount">-</td>
+              <td><strong style="color: #b45309;">Éléments Mensuels Pointés (Feuille 2)</strong></td>
+              <td class="amount">${netChargesPointees < 0 ? '<span class="amount-minus">' + netChargesPointees.toFixed(2) + ' €</span>' : '-'}</td>
+              <td class="amount">${netChargesPointees > 0 ? '<span class="amount-plus">+' + netChargesPointees.toFixed(2) + ' €</span>' : '-'}</td>
               <td class="amount ${currentSolde < 0 ? 'negative' : ''}">${currentSolde.toFixed(2)} €</td>
               <td class="center">-</td>
               <td></td>
@@ -304,16 +307,16 @@
           tableBody.appendChild(row);
         });
 
-        const chargesRestantes = totalCharges - chargesPointees;
-        const soldeApresToutesCharges = currentSolde - chargesRestantes;
+        const chargesRestantes = netChargesTotal - netChargesPointees;
+        const soldeApresToutesCharges = currentSolde + chargesRestantes;
 
-        if (totalCharges > 0) {
+        if (data.page2.length > 0) {
           tableBody.innerHTML += `
             <tr class="row-charges-estime">
               <td style="color: var(--text-muted)">—</td>
               <td style="color: var(--text-muted)">—</td>
-              <td><strong style="color: #1d4ed8;">Solde Final (Toutes charges déduites)</strong></td>
-              <td class="amount"><span class="amount-minus">-${totalCharges.toFixed(2)} €</span></td>
+              <td><strong style="color: #1d4ed8;">Solde Final (Tous mensuels inclus)</strong></td>
+              <td class="amount">-</td>
               <td class="amount">-</td>
               <td class="amount ${soldeApresToutesCharges < 0 ? 'negative' : ''}"><strong>${soldeApresToutesCharges.toFixed(2)} €</strong></td>
               <td class="center">-</td>
@@ -333,7 +336,8 @@
           row.innerHTML = `
             <td style="color: var(--text-muted)">${t.cheque || '-'}</td>
             <td><strong>${t.ordre}</strong></td>
-            <td class="amount"><span class="amount-minus">-${t.retrait.toFixed(2)} €</span></td>
+            <td class="amount">${t.retrait > 0 ? '<span class="amount-minus">-' + t.retrait.toFixed(2) + ' €</span>' : '-'}</td>
+            <td class="amount">${t.versement > 0 ? '<span class="amount-plus">+' + t.versement.toFixed(2) + ' €</span>' : '-'}</td>
             <td class="center">
               <input type="checkbox" ${t.pointage ? 'checked' : ''} onchange="togglePointage(${t.id}, 'page2')">
             </td>
@@ -344,9 +348,12 @@
           tableBody.appendChild(row);
         });
 
+        const totalRetraits = data.page2.reduce((acc, t) => acc + t.retrait, 0);
+        const totalVersements = data.page2.reduce((acc, t) => acc + t.versement, 0);
+
         summaryBar.innerHTML = `
-          <div>Total Charges : <strong>-${totalCharges.toFixed(2)} €</strong></div>
-          <div>Prélevées : <strong style="color: #38bdf8;">-${chargesPointees.toFixed(2)} €</strong></div>
+          <div>Débits : <strong style="color: #ef4444;">-${totalRetraits.toFixed(2)} €</strong> | Crédits : <strong style="color: #10b981;">+${totalVersements.toFixed(2)} €</strong></div>
+          <div>Bilan Mensuel : <strong style="color: #38bdf8;">${netChargesTotal >= 0 ? '+' : ''}${netChargesTotal.toFixed(2)} €</strong></div>
         `;
       }
     }

@@ -17,6 +17,8 @@
       --success-bg: #ecfdf5;
       --warning-bg: #fffbe3;
       --info-bg: #eff6ff;
+      --reserve-bg: #f3e8ff;
+      --reserve-color: #7e22ce;
       --border: #cbd5e1;
     }
 
@@ -36,7 +38,8 @@
       .form-grid { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
     }
 
-    /* Style appliqué uniquement aux champs texte et numériques */
+    .checkbox-field { display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; color: #475569; background: #f8fafc; border: 2px solid #cbd5e1; border-radius: 10px; padding: 10px; cursor: pointer; }
+
     input[type="text"], input[type="number"], input[type="date"] { 
       padding: 14px; 
       border: 2px solid #cbd5e1; 
@@ -64,6 +67,7 @@
     td { padding: 12px 8px; border-bottom: 1px solid #f1f5f9; font-weight: 600; }
     tr:hover td { background-color: #f8fafc; }
     
+    .row-reserve { background-color: var(--reserve-bg) !important; color: var(--reserve-color); }
     .row-charges-total { background-color: var(--warning-bg) !important; border-left: 4px solid #f59e0b; }
     .row-charges-estime { background-color: var(--info-bg) !important; border-left: 4px solid #3b82f6; }
 
@@ -73,24 +77,25 @@
     .negative { color: var(--danger); font-weight: 900; }
     .center { text-align: center; }
 
-    .summary { display: flex; flex-direction: column; gap: 8px; background: #0f172a; border-radius: 12px; padding: 14px; margin-top: 16px; font-weight: 800; color: #ffffff; font-size: 0.9rem; box-shadow: 0 6px 15px rgba(15, 23, 42, 0.4); }
-    @media (min-width: 600px) {
-      .summary { flex-direction: row; justify-content: space-between; align-items: center; }
-    }
-    .summary-val { font-size: 1.2rem; font-family: 'Courier New', monospace; color: #38bdf8; text-shadow: 0 0 8px rgba(56, 189, 248, 0.5); }
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 16px; }
+    .summary-card { background: #0f172a; border-radius: 12px; padding: 14px; color: #ffffff; font-weight: 800; font-size: 0.85rem; box-shadow: 0 6px 15px rgba(15, 23, 42, 0.4); border: 1px solid rgba(255,255,255,0.1); }
+    .summary-title { text-transform: uppercase; color: #94a3b8; margin-bottom: 6px; font-size: 0.75rem; }
+    .summary-val { font-size: 1.3rem; font-family: 'Courier New', monospace; color: #38bdf8; }
+    .summary-val.reserve { color: #c084fc; }
+    .summary-val.total { color: #4ade80; }
 
     .btn-del { background: #fef2f2; border: none; color: var(--danger); border-radius: 6px; cursor: pointer; font-size: 1rem; padding: 6px 10px; font-weight: 900; }
     
-    /* Style lisible pour les cases à cocher tactile */
     input[type="checkbox"] { 
-      width: 22px; 
-      height: 22px; 
+      width: 20px; 
+      height: 20px; 
       accent-color: #2563eb; 
       cursor: pointer; 
       vertical-align: middle; 
     }
 
     .sync-status { text-align: center; color: #a7f3d0; font-size: 0.8rem; font-weight: 700; margin-top: -10px; margin-bottom: 12px; }
+    .tag-reserve { background: var(--reserve-color); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-right: 4px; text-transform: uppercase; }
   </style>
 </head>
 <body>
@@ -120,7 +125,7 @@
       </table>
     </div>
 
-    <div class="summary" id="summary-bar"></div>
+    <div class="summary-grid" id="summary-bar"></div>
   </div>
 
   <script type="module">
@@ -176,9 +181,12 @@
         formFields.innerHTML = `
           <input type="date" id="date" required>
           <input type="text" id="cheque" placeholder="Chèque (optionnel)">
-          <input type="text" id="ordre" placeholder="Libellé / Ordre" required>
+          <input type="text" id="ordre" placeholder="Libellé / Intitulé" required>
           <input type="number" step="0.01" id="retrait" placeholder="Retrait (€)">
           <input type="number" step="0.01" id="versement" placeholder="Versement (€)">
+          <label class="checkbox-field">
+            <input type="checkbox" id="is-reserve"> Réserve ?
+          </label>
         `;
         tableHead.innerHTML = `
           <th>Date</th>
@@ -222,13 +230,15 @@
     document.getElementById('transaction-form').addEventListener('submit', (e) => {
       e.preventDefault();
       
+      const isReserveEl = document.getElementById('is-reserve');
       const newEntry = {
         id: Date.now(),
         cheque: document.getElementById('cheque').value,
         ordre: document.getElementById('ordre').value,
         retrait: parseFloat(document.getElementById('retrait').value) || 0,
         versement: parseFloat(document.getElementById('versement').value) || 0,
-        pointage: false
+        pointage: false,
+        isReserve: isReserveEl ? isReserveEl.checked : false
       };
 
       if (currentPage === 'page1') {
@@ -269,8 +279,8 @@
       const summaryBar = document.getElementById('summary-bar');
       tableBody.innerHTML = '';
       
-      let currentSolde = 0;
-      const netChargesTotal = getNetChargesTotal();
+      let soldeCompte = 0;
+      let soldeReserve = 0;
       const netChargesPointees = getNetChargesPointees();
 
       if (currentPage === 'page1') {
@@ -288,7 +298,7 @@
         `;
 
         if (data.page2.length > 0) {
-          currentSolde += netChargesPointees;
+          soldeCompte += netChargesPointees;
 
           tableBody.innerHTML += `
             <tr class="row-charges-total">
@@ -297,7 +307,7 @@
               <td><strong style="color: #b45309;">Éléments Mensuels Pointés (Feuille 2)</strong></td>
               <td class="amount">${netChargesPointees < 0 ? '<span class="amount-minus">' + netChargesPointees.toFixed(2) + ' €</span>' : '-'}</td>
               <td class="amount">${netChargesPointees > 0 ? '<span class="amount-plus">+' + netChargesPointees.toFixed(2) + ' €</span>' : '-'}</td>
-              <td class="amount ${currentSolde < 0 ? 'negative' : ''}">${currentSolde.toFixed(2)} €</td>
+              <td class="amount ${soldeCompte < 0 ? 'negative' : ''}">${soldeCompte.toFixed(2)} €</td>
               <td class="center">-</td>
               <td></td>
             </tr>
@@ -308,17 +318,24 @@
 
         sortedOps.forEach(t => {
           if (t.pointage) {
-            currentSolde = currentSolde - t.retrait + t.versement;
+            if (t.isReserve) {
+              soldeReserve = soldeReserve - t.retrait + t.versement;
+            } else {
+              soldeCompte = soldeCompte - t.retrait + t.versement;
+            }
           }
 
+          const currentTotal = soldeCompte + soldeReserve;
           const row = document.createElement('tr');
+          if (t.isReserve) row.classList.add('row-reserve');
+
           row.innerHTML = `
             <td style="color: var(--text-muted)">${t.date}</td>
             <td style="color: var(--text-muted)">${t.cheque || '-'}</td>
-            <td><strong>${t.ordre}</strong></td>
+            <td>${t.isReserve ? '<span class="tag-reserve">Réserve</span>' : ''} <strong>${t.ordre}</strong></td>
             <td class="amount">${t.retrait > 0 ? '<span class="amount-minus">-' + t.retrait.toFixed(2) + ' €</span>' : ''}</td>
             <td class="amount">${t.versement > 0 ? '<span class="amount-plus">+' + t.versement.toFixed(2) + ' €</span>' : ''}</td>
-            <td class="amount ${currentSolde < 0 ? 'negative' : ''}">${currentSolde.toFixed(2)} €</td>
+            <td class="amount ${currentTotal < 0 ? 'negative' : ''}">${currentTotal.toFixed(2)} €</td>
             <td class="center">
               <input type="checkbox" ${t.pointage ? 'checked' : ''} onchange="togglePointage(${t.id}, 'page1')">
             </td>
@@ -329,27 +346,21 @@
           tableBody.appendChild(row);
         });
 
-        const chargesRestantes = netChargesTotal - netChargesPointees;
-        const soldeApresToutesCharges = currentSolde + chargesRestantes;
-
-        if (data.page2.length > 0) {
-          tableBody.innerHTML += `
-            <tr class="row-charges-estime">
-              <td style="color: var(--text-muted)">—</td>
-              <td style="color: var(--text-muted)">—</td>
-              <td><strong style="color: #1d4ed8;">Solde Final (Tous mensuels inclus)</strong></td>
-              <td class="amount">-</td>
-              <td class="amount">-</td>
-              <td class="amount ${soldeApresToutesCharges < 0 ? 'negative' : ''}"><strong>${soldeApresToutesCharges.toFixed(2)} €</strong></td>
-              <td class="center">-</td>
-              <td></td>
-            </tr>
-          `;
-        }
+        const soldeTotalGlobal = soldeCompte + soldeReserve;
 
         summaryBar.innerHTML = `
-          <div>Solde Réel : <span class="summary-val ${currentSolde < 0 ? 'negative' : ''}">${currentSolde.toFixed(2)} €</span></div>
-          <div>Solde Estimé Fin de Mois : <span class="summary-val ${soldeApresToutesCharges < 0 ? 'negative' : ''}">${soldeApresToutesCharges.toFixed(2)} €</span></div>
+          <div class="summary-card">
+            <div class="summary-title">Solde Compte (Pointé)</div>
+            <div class="summary-val ${soldeCompte < 0 ? 'negative' : ''}">${soldeCompte.toFixed(2)} €</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-title">Solde Réserves Seules</div>
+            <div class="summary-val reserve">${soldeReserve.toFixed(2)} €</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-title">Solde Total (Compte + Réserves)</div>
+            <div class="summary-val total">${soldeTotalGlobal.toFixed(2)} €</div>
+          </div>
         `;
 
       } else {
@@ -372,10 +383,21 @@
 
         const totalRetraits = data.page2.reduce((acc, t) => acc + t.retrait, 0);
         const totalVersements = data.page2.reduce((acc, t) => acc + t.versement, 0);
+        const netChargesTotal = getNetChargesTotal();
 
         summaryBar.innerHTML = `
-          <div>Débits : <strong style="color: #ef4444;">-${totalRetraits.toFixed(2)} €</strong> | Crédits : <strong style="color: #10b981;">+${totalVersements.toFixed(2)} €</strong></div>
-          <div>Bilan Mensuel : <strong style="color: #38bdf8;">${netChargesTotal >= 0 ? '+' : ''}${netChargesTotal.toFixed(2)} €</strong></div>
+          <div class="summary-card">
+            <div class="summary-title">Total Charges / Débits</div>
+            <div class="summary-val negative">-${totalRetraits.toFixed(2)} €</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-title">Total Revenus / Crédits</div>
+            <div class="summary-val" style="color:#10b981;">+${totalVersements.toFixed(2)} €</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-title">Bilan Mensuel Fixe</div>
+            <div class="summary-val">${netChargesTotal >= 0 ? '+' : ''}${netChargesTotal.toFixed(2)} €</div>
+          </div>
         `;
       }
     }

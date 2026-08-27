@@ -93,8 +93,7 @@
     
     let data = JSON.parse(localStorage.getItem('comptes_remi_data')) || {
       page1: [],
-      page2: [],
-      chargesPointees: false
+      page2: []
     };
 
     const form = document.getElementById('transaction-form');
@@ -173,14 +172,9 @@
       render();
     });
 
-    function togglePointage(id) {
-      data[currentPage] = data[currentPage].map(t => t.id === id ? { ...t, pointage: !t.pointage } : t);
-      save();
-      render();
-    }
-
-    function toggleGlobalCharges() {
-      data.chargesPointees = !data.chargesPointees;
+    function togglePointage(id, pageSource) {
+      const page = pageSource || currentPage;
+      data[page] = data[page].map(t => t.id === id ? { ...t, pointage: !t.pointage } : t);
       save();
       render();
     }
@@ -191,14 +185,21 @@
       render();
     }
 
+    // Calcul du total de TOUTES les charges
     function getTotalCharges() {
       return data.page2.reduce((total, t) => total + t.retrait, 0);
+    }
+
+    // Calcul du total des charges uniquement COCHÉES/POINTÉES dans la feuille 2
+    function getTotalChargesPointees() {
+      return data.page2.filter(t => t.pointage).reduce((total, t) => total + t.retrait, 0);
     }
 
     function render() {
       tableBody.innerHTML = '';
       let currentSolde = 0;
       const totalCharges = getTotalCharges();
+      const chargesPointees = getTotalChargesPointees();
 
       if (currentPage === 'page1') {
         // Solde initial
@@ -215,29 +216,26 @@
           </tr>
         `;
 
-        // Ligne unique regroupant toutes les charges
+        // Ligne unique regroupant les charges pointées
         if (totalCharges > 0) {
-          if (data.chargesPointees) {
-            currentSolde -= totalCharges;
-          }
+          // On déduit uniquement le montant des charges qui ont été cochées en feuille 2
+          currentSolde -= chargesPointees;
 
           tableBody.innerHTML += `
             <tr class="row-charges-total">
               <td style="color: var(--text-muted)">—</td>
               <td style="color: var(--text-muted)">—</td>
-              <td><strong style="color: #b45309;">Total Charges Mensuelles</strong></td>
-              <td class="amount"><span class="amount-minus">-${totalCharges.toFixed(2)} €</span></td>
+              <td><strong style="color: #b45309;">Total Charges Prélevées</strong></td>
+              <td class="amount"><span class="amount-minus">-${chargesPointees.toFixed(2)} €</span></td>
               <td class="amount">-</td>
               <td class="amount ${currentSolde < 0 ? 'negative' : ''}">${currentSolde.toFixed(2)} €</td>
-              <td class="center">
-                <input type="checkbox" ${data.chargesPointees ? 'checked' : ''} onchange="toggleGlobalCharges()">
-              </td>
+              <td class="center">-</td>
               <td></td>
             </tr>
           `;
         }
 
-        // Tri des opérations courantes
+        // Tri et affichage des opérations courantes de la Feuille 1
         const sortedOps = [...data.page1].sort((a, b) => new Date(a.date) - new Date(b.date));
 
         sortedOps.forEach(t => {
@@ -254,7 +252,7 @@
             <td class="amount">${t.versement > 0 ? '<span class="amount-plus">+' + t.versement.toFixed(2) + ' €</span>' : ''}</td>
             <td class="amount ${currentSolde < 0 ? 'negative' : ''}">${currentSolde.toFixed(2)} €</td>
             <td class="center">
-              <input type="checkbox" ${t.pointage ? 'checked' : ''} onchange="togglePointage(${t.id})">
+              <input type="checkbox" ${t.pointage ? 'checked' : ''} onchange="togglePointage(${t.id}, 'page1')">
             </td>
             <td class="center">
               <button class="btn-del" onclick="deleteTransaction(${t.id})">✕</button>
@@ -264,8 +262,7 @@
         });
 
         summaryBar.innerHTML = `
-          <span>Total charges du mois : <strong style="color: #f59e0b;">${totalCharges.toFixed(2)} €</strong></span>
-          <span>Statut charges : <strong>${data.chargesPointees ? 'Prélevées' : 'En attente'}</strong></span>
+          <span>Charges prélevées : <strong style="color: #f59e0b;">${chargesPointees.toFixed(2)} € / ${totalCharges.toFixed(2)} €</strong></span>
           <span>Solde disponible : <strong class="summary-val ${currentSolde < 0 ? 'negative' : ''}">${currentSolde.toFixed(2)} €</strong></span>
         `;
 
@@ -278,7 +275,7 @@
             <td><strong>${t.ordre}</strong></td>
             <td class="amount"><span class="amount-minus">-${t.retrait.toFixed(2)} €</span></td>
             <td class="center">
-              <input type="checkbox" ${t.pointage ? 'checked' : ''} onchange="togglePointage(${t.id})">
+              <input type="checkbox" ${t.pointage ? 'checked' : ''} onchange="togglePointage(${t.id}, 'page2')">
             </td>
             <td class="center">
               <button class="btn-del" onclick="deleteTransaction(${t.id})">✕</button>
@@ -288,8 +285,8 @@
         });
 
         summaryBar.innerHTML = `
-          <span>Total des charges mensuelles détaillées :</span>
-          <strong class="summary-val" style="color: #6ee7b7;">-${totalCharges.toFixed(2)} €</strong>
+          <span>Total des charges mensuelles : <strong>-${totalCharges.toFixed(2)} €</strong></span>
+          <span>Prélevées : <strong style="color: #6ee7b7;">-${chargesPointees.toFixed(2)} €</strong></span>
         `;
       }
     }

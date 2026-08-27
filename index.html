@@ -3,38 +3,242 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestion de Comptes Remi</title>
+  <title>Mes Comptes</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f6f8; }
-    h1 { color: #333; }
+    :root {
+      --bg-color: #f8fafc;
+      --card-bg: #ffffff;
+      --text-color: #0f172a;
+      --text-muted: #64748b;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --danger: #ef4444;
+      --success: #10b981;
+      --border: #e2e8f0;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text-color); padding: 16px; max-width: 1000px; margin: 0 auto; }
     
-    .tabs { display: flex; gap: 5px; margin-bottom: -1px; }
-    .tab-btn { padding: 10px 20px; background: #e0e0e0; border: 1px solid #ccc; border-bottom: none; border-radius: 6px 6px 0 0; cursor: pointer; font-weight: bold; }
-    .tab-btn.active { background: white; border-top: 3px solid #007bff; color: #007bff; }
+    h1 { font-size: 1.5rem; margin-bottom: 16px; color: var(--text-color); font-weight: 700; }
+
+    /* Navigation par onglets */
+    .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    .tab-btn { flex: 1; padding: 12px; border: none; background: #e2e8f0; border-radius: 10px; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: 0.2s; }
+    .tab-btn.active { background: var(--primary); color: white; }
+
+    /* Cartes */
+    .card { background: var(--card-bg); border-radius: 14px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid var(--border); margin-bottom: 16px; }
     
-    .card { background: white; padding: 20px; border-radius: 0 8px 8px 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; border: 1px solid #ccc; }
-    form { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
-    input, button { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-    button { background-color: #28a745; color: white; border: none; cursor: pointer; }
-    button:hover { background-color: #218838; }
-    table { width: 100%; border-collapse: collapse; background: white; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-    th { background-color: #f2f2f2; }
-    .amount { text-align: right; }
+    /* Formulaire */
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 12px; }
+    input { padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; outline: none; width: 100%; }
+    input:focus { border-color: var(--primary); }
+    .btn-add { background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; padding: 10px; transition: 0.2s; width: 100%; }
+    .btn-add:hover { background: var(--primary-hover); }
+
+    /* Tableau */
+    .table-container { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th { text-align: left; padding: 12px 8px; color: var(--text-muted); font-weight: 600; border-bottom: 2px solid var(--border); }
+    td { padding: 12px 8px; border-bottom: 1px solid var(--border); }
+    tr:last-child td { border-bottom: none; }
+    
+    .amount { text-align: right; white-space: nowrap; }
+    .amount-plus { color: var(--success); font-weight: 600; }
+    .amount-minus { color: var(--danger); font-weight: 600; }
+    .negative { color: var(--danger); font-weight: 700; }
     .center { text-align: center; }
-    .negative { color: red; font-weight: bold; }
-    .btn-delete { background-color: #dc3545; padding: 4px 8px; font-size: 12px; }
+
+    /* Résumé / Kpis */
+    .summary { display: flex; justify-content: space-between; align-items: center; background: #eff6ff; border-radius: 10px; padding: 12px 16px; margin-top: 12px; font-weight: 600; }
+    .summary-val { font-size: 1.1rem; }
+
+    /* Bouton supprimer */
+    .btn-del { background: transparent; border: none; color: #94a3b8; cursor: pointer; font-size: 1rem; padding: 4px; }
+    .btn-del:hover { color: var(--danger); }
+    
+    /* Checkbox pointage */
+    input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; }
   </style>
 </head>
 <body>
 
-  <h1>Gestion de Comptes — Remi</h1>
+  <h1>Mes Comptes</h1>
 
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchPage('page1')">Page 1</button>
-    <button class="tab-btn" onclick="switchPage('page2')">Page 2</button>
+    <button class="tab-btn active" onclick="switchPage('page1')">Dépenses & Revenus</button>
+    <button class="tab-btn" onclick="switchPage('page2')">Charges</button>
   </div>
 
+  <div class="card">
+    <form id="transaction-form">
+      <div class="form-grid">
+        <input type="date" id="date" required>
+        <input type="text" id="cheque" placeholder="Chèque (facultatif)">
+        <input type="text" id="ordre" placeholder="Libellé / Ordre" required>
+        <input type="number" step="0.01" id="retrait" placeholder="Retrait (€)">
+        <input type="number" step="0.01" id="versement" placeholder="Versement (€)">
+      </div>
+      <button type="submit" class="btn-add">+ Ajouter l'opération</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Chèque</th>
+            <th>Libellé</th>
+            <th class="amount">Retrait</th>
+            <th class="amount">Versement</th>
+            <th class="amount">Solde</th>
+            <th class="center">Pointé</th>
+            <th class="center"></th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+
+    <div class="summary" id="summary-bar"></div>
+  </div>
+
+  <script>
+    let currentPage = 'page1';
+    
+    let data = JSON.parse(localStorage.getItem('comptes_remi_data')) || {
+      page1: [],
+      page2: []
+    };
+
+    const form = document.getElementById('transaction-form');
+    const tableBody = document.getElementById('table-body');
+    const summaryBar = document.getElementById('summary-bar');
+
+    function save() {
+      localStorage.setItem('comptes_remi_data', JSON.stringify(data));
+    }
+
+    function switchPage(page) {
+      currentPage = page;
+      document.querySelectorAll('.tab-btn').forEach((btn, index) => {
+        btn.classList.toggle('active', (page === 'page1' && index === 0) || (page === 'page2' && index === 1));
+      });
+      render();
+    }
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      data[currentPage].push({
+        id: Date.now(),
+        date: document.getElementById('date').value,
+        cheque: document.getElementById('cheque').value,
+        ordre: document.getElementById('ordre').value,
+        retrait: parseFloat(document.getElementById('retrait').value) || 0,
+        versement: parseFloat(document.getElementById('versement').value) || 0,
+        pointage: false
+      });
+      save();
+      form.reset();
+      render();
+    });
+
+    function togglePointage(id) {
+      data[currentPage] = data[currentPage].map(t => t.id === id ? { ...t, pointage: !t.pointage } : t);
+      save();
+      render();
+    }
+
+    function deleteTransaction(id) {
+      data[currentPage] = data[currentPage].filter(t => t.id !== id);
+      save();
+      render();
+    }
+
+    function getTotalCharges() {
+      return data.page2.reduce((total, t) => total + t.retrait - t.versement, 0);
+    }
+
+    function render() {
+      tableBody.innerHTML = '';
+      let currentSolde = 0;
+      const transactions = data[currentPage];
+      const totalCharges = getTotalCharges();
+
+      // Solde Initial
+      tableBody.innerHTML += `
+        <tr>
+          <td style="color: var(--text-muted)">-</td>
+          <td style="color: var(--text-muted)">-</td>
+          <td><strong>Solde initial</strong></td>
+          <td class="amount">-</td>
+          <td class="amount">-</td>
+          <td class="amount"><strong>0,00 €</strong></td>
+          <td class="center">-</td>
+          <td></td>
+        </tr>
+      `;
+
+      // Déduction automatique des charges sur la page 1
+      if (currentPage === 'page1' && totalCharges > 0) {
+        currentSolde -= totalCharges;
+        tableBody.innerHTML += `
+          <tr style="background: #fefce8;">
+            <td style="color: var(--text-muted)">-</td>
+            <td style="color: var(--text-muted)">-</td>
+            <td><strong>Total Charges (onglet Charges)</strong></td>
+            <td class="amount amount-minus">-${totalCharges.toFixed(2)} €</td>
+            <td class="amount">-</td>
+            <td class="amount ${currentSolde < 0 ? 'negative' : ''}">${currentSolde.toFixed(2)} €</td>
+            <td class="center">-</td>
+            <td></td>
+          </tr>
+        `;
+      }
+
+      transactions.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      transactions.forEach(t => {
+        currentSolde = currentSolde - t.retrait + t.versement;
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td style="color: var(--text-muted)">${t.date}</td>
+          <td style="color: var(--text-muted)">${t.cheque || '-'}</td>
+          <td><strong>${t.ordre}</strong></td>
+          <td class="amount amount-minus">${t.retrait > 0 ? '-' + t.retrait.toFixed(2) + ' €' : ''}</td>
+          <td class="amount amount-plus">${t.versement > 0 ? '+' + t.versement.toFixed(2) + ' €' : ''}</td>
+          <td class="amount ${currentSolde < 0 ? 'negative' : ''}">${currentSolde.toFixed(2)} €</td>
+          <td class="center">
+            <input type="checkbox" ${t.pointage ? 'checked' : ''} onchange="togglePointage(${t.id})">
+          </td>
+          <td class="center">
+            <button class="btn-del" onclick="deleteTransaction(${t.id})">✕</button>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+
+      if (currentPage === 'page1') {
+        summaryBar.innerHTML = `
+          <span>Total charges déduites : <strong>${totalCharges.toFixed(2)} €</strong></span>
+          <span>Solde global : <strong class="summary-val ${currentSolde < 0 ? 'negative' : ''}">${currentSolde.toFixed(2)} €</strong></span>
+        `;
+      } else {
+        const totalChargesPage2 = data.page2.reduce((sum, t) => sum + t.retrait, 0);
+        summaryBar.innerHTML = `
+          <span>Total des charges enregistrées :</span>
+          <strong class="summary-val">${totalChargesPage2.toFixed(2)} €</strong>
+        `;
+      }
+    }
+
+    render();
+  </script>
+</body>
+</html>
   <div class="card">
     <h3 id="page-title">Ajouter une opération (Page 1)</h3>
     <form id="transaction-form">

@@ -1,158 +1,6 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mes Comptes</title>
-  
-  <!-- Configuration PWA (Installation Application) -->
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#1e293b">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Comptes">
-  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2845/2845722.png">
-
-  <style>
-    :root {
-      --bg-gradient: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-      --card-bg: #ffffff;
-      --text-color: #0f172a;
-      --text-muted: #64748b;
-      --primary-grad: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%);
-      --danger: #ef4444;
-      --danger-bg: #fef2f2;
-      --success: #10b981;
-      --success-bg: #ecfdf5;
-      --warning-bg: #fffbe3;
-      --info-bg: #eff6ff;
-      --reserve-bg: #f3e8ff;
-      --reserve-color: #7e22ce;
-      --border: #cbd5e1;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
-    body { background: var(--bg-gradient); color: #0f172a; padding: 12px 10px; min-height: 100vh; max-width: 1000px; margin: 0 auto; }
-    
-    h1 { font-size: 1.8rem; margin-bottom: 8px; color: #ffffff; font-weight: 900; text-align: center; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 3px 10px rgba(0,0,0,0.3); }
-
-    .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
-    .tab-btn { flex: 1; padding: 14px 8px; border: none; background: rgba(255, 255, 255, 0.1); border-radius: 14px; font-weight: 800; font-size: 0.95rem; color: #ffffff; cursor: pointer; transition: all 0.3s ease; backdrop-filter: blur(10px); border: 2px solid rgba(255,255,255,0.15); text-align: center; }
-    .tab-btn.active { background: #3b82f6; color: #ffffff; box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4); border-color: #60a5fa; }
-
-    .card { background: var(--card-bg); border-radius: 16px; padding: 16px; box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3); margin-bottom: 16px; }
-    
-    .form-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 12px; }
-    @media (min-width: 600px) {
-      .form-grid { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
-    }
-
-    .checkbox-field { display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; color: #475569; background: #f8fafc; border: 2px solid #cbd5e1; border-radius: 10px; padding: 10px; cursor: pointer; }
-
-    input[type="text"], input[type="number"], input[type="date"] { 
-      padding: 14px; 
-      border: 2px solid #cbd5e1; 
-      border-radius: 10px; 
-      font-size: 1rem; 
-      font-weight: 600; 
-      outline: none; 
-      width: 100%; 
-      transition: all 0.2s; 
-      background: #f8fafc; 
-      color: #0f172a;
-      -webkit-appearance: none; 
-      min-height: 48px;
-    }
-    input[type="date"]::-webkit-date-and-time-value {
-      text-align: left;
-    }
-    input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus { 
-      border-color: #3b82f6; 
-      background: #ffffff; 
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); 
-    }
-    
-    .btn-add { background: var(--primary-grad); color: white; border: none; border-radius: 10px; font-weight: 800; font-size: 1rem; cursor: pointer; padding: 14px; transition: all 0.2s ease; width: 100%; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 6px 15px rgba(37, 99, 235, 0.4); }
-    .btn-add:active { transform: scale(0.98); }
-
-    .table-container { overflow-x: auto; border-radius: 10px; -webkit-overflow-scrolling: touch; }
-    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; min-width: 500px; }
-    th { text-align: left; padding: 12px 8px; color: #ffffff; font-weight: 800; background: #1e293b; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px; }
-    td { padding: 12px 8px; border-bottom: 1px solid #f1f5f9; font-weight: 600; }
-    tr:hover td { background-color: #f8fafc; }
-    
-    .row-reserve { background-color: var(--reserve-bg) !important; color: var(--reserve-color); }
-    .row-charges-total { background-color: var(--warning-bg) !important; border-left: 4px solid #f59e0b; }
-
-    .amount { text-align: right; white-space: nowrap; font-family: 'Courier New', monospace; font-size: 0.95rem; font-weight: 800; }
-    .amount-plus { color: #10b981; background: var(--success-bg); padding: 3px 6px; border-radius: 6px; display: inline-block; }
-    .amount-minus { color: var(--danger); background: var(--danger-bg); padding: 3px 6px; border-radius: 6px; display: inline-block; }
-    .negative { color: var(--danger); font-weight: 900; }
-    .center { text-align: center; }
-
-    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 16px; }
-    .summary-card { background: #0f172a; border-radius: 12px; padding: 14px; color: #ffffff; font-weight: 800; font-size: 0.85rem; box-shadow: 0 6px 15px rgba(15, 23, 42, 0.4); border: 1px solid rgba(255,255,255,0.1); }
-    .summary-title { text-transform: uppercase; color: #94a3b8; margin-bottom: 6px; font-size: 0.75rem; }
-    .summary-val { font-size: 1.3rem; font-family: 'Courier New', monospace; color: #38bdf8; }
-    .summary-val.reserve { color: #c084fc; }
-    .summary-val.total { color: #4ade80; }
-
-    .btn-del { background: #fef2f2; border: none; color: var(--danger); border-radius: 6px; cursor: pointer; font-size: 1rem; padding: 6px 10px; font-weight: 900; }
-    
-    input[type="checkbox"] { 
-      width: 20px; 
-      height: 20px; 
-      accent-color: #2563eb; 
-      cursor: pointer; 
-      vertical-align: middle; 
-    }
-
-    .sync-status { text-align: center; color: #a7f3d0; font-size: 0.8rem; font-weight: 700; margin-top: -4px; margin-bottom: 12px; }
-    .user-key-badge { background: rgba(255,255,255,0.15); color: #cbd5e1; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px; font-family: monospace; display: inline-block; }
-    .tag-reserve { background: var(--reserve-color); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-right: 4px; text-transform: uppercase; }
-  </style>
-</head>
-<body>
-
-  <h1>💳 Mes Comptes 💳</h1>
-  <div class="sync-status">
-    🟢 Synchronisation Firebase Active | <span class="user-key-badge" id="user-badge">Clé : ...</span>
-  </div>
-
-  <div class="tabs">
-    <button class="tab-btn active" onclick="switchPage('page1')">Dépenses & Revenus</button>
-    <button class="tab-btn" onclick="switchPage('page2')">Fixes & Mensuels</button>
-  </div>
-
-  <div class="card">
-    <form id="transaction-form">
-      <div class="form-grid" id="form-fields"></div>
-      <button type="submit" class="btn-add">+ Ajouter l'opération</button>
-    </form>
-  </div>
-
-  <div class="card">
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr id="table-head"></tr>
-        </thead>
-        <tbody id="table-body"></tbody>
-      </table>
-    </div>
-
-    <div class="summary-grid" id="summary-bar"></div>
-  </div>
-
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js').catch(() => {});
-    }
-  </script>
-
-  <script type="module">
+<script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     // --- Gestion de la Clé Unique d'Utilisateur ---
     function getUserKey() {
@@ -163,6 +11,7 @@
         user = localStorage.getItem('mes_comptes_user_key');
       }
 
+      // Si aucune clé n'existe, on en génère une TOUTE NEUVE
       if (!user) {
         user = 'usr_' + Math.random().toString(36).substr(2, 9);
       }
@@ -193,40 +42,24 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     
-    // Références Firebase
-    const oldDbRef = ref(db, 'comptes_data');
+    // Référence Firebase UNIQUE pour cet utilisateur
     const userDbRef = ref(db, 'comptes_data_users/' + currentUserId);
 
     let currentPage = 'page1';
     let data = { page1: [], page2: [] };
 
-    // MIGRATION AUTOMATIQUE
-    async function checkAndMigrateOldData() {
-      const userSnap = await get(userDbRef);
-      if (!userSnap.exists()) {
-        const oldSnap = await get(oldDbRef);
-        if (oldSnap.exists()) {
-          const oldData = oldSnap.val();
-          if (oldData && (oldData.page1 || oldData.page2)) {
-            await set(userDbRef, oldData);
-          }
-        }
+    // Écoute des données uniquement sur la clé spécifique
+    onValue(userDbRef, (snapshot) => {
+      const val = snapshot.val();
+      if (val) {
+        data = {
+          page1: val.page1 || [],
+          page2: val.page2 || []
+        };
+      } else {
+        data = { page1: [], page2: [] };
       }
-    }
-
-    checkAndMigrateOldData().then(() => {
-      onValue(userDbRef, (snapshot) => {
-        const val = snapshot.val();
-        if (val) {
-          data = {
-            page1: val.page1 || [],
-            page2: val.page2 || []
-          };
-        } else {
-          data = { page1: [], page2: [] };
-        }
-        render();
-      });
+      render();
     });
 
     function save() {
@@ -318,7 +151,6 @@
       data[currentPage].push(newEntry);
       save();
       
-      // Réinitialise le formulaire en gardant la date du jour
       e.target.reset();
       const dateEl = document.getElementById('date');
       if (dateEl) {
@@ -489,5 +321,3 @@
 
     updateFormAndHead();
   </script>
-</body>
-</html>

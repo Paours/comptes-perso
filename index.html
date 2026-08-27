@@ -6,63 +6,62 @@
   <title>Mes Comptes</title>
   <style>
     :root {
-      --bg-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #c026d3 100%);
+      --bg-gradient: linear-gradient(135deg, #064e3b 0%, #047857 50%, #10b981 100%);
       --card-bg: #ffffff;
-      --text-color: #0f172a;
+      --text-color: #064e3b;
       --text-muted: #64748b;
-      --primary-grad: linear-gradient(90deg, #ff007a 0%, #7e22ce 100%);
-      --danger: #ff0055;
-      --danger-bg: #ffe5ed;
-      --success: #00d68f;
+      --primary-btn: linear-gradient(90deg, #059669 0%, #10b981 100%);
+      --danger: #e11d48;
+      --danger-bg: #ffe4e6;
+      --success: #059669;
       --success-bg: #d1fae5;
-      --warning-bg: #fff3c4;
-      --border: #cbd5e1;
+      --warning-bg: #fef3c7;
+      --border: #a7f3d0;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
-    body { background: var(--bg-gradient); color: var(--text-color); padding: 20px 16px; min-height: 100vh; max-width: 1000px; margin: 0 auto; }
+    body { background: var(--bg-gradient); color: #0f172a; padding: 20px 16px; min-height: 100vh; max-width: 1000px; margin: 0 auto; }
     
     h1 { font-size: 2.2rem; margin-bottom: 20px; color: #ffffff; font-weight: 900; text-align: center; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 3px 10px rgba(0,0,0,0.3); }
 
     .tabs { display: flex; gap: 12px; margin-bottom: 20px; }
     .tab-btn { flex: 1; padding: 16px; border: none; background: rgba(255, 255, 255, 0.2); border-radius: 16px; font-weight: 800; font-size: 1.05rem; color: #ffffff; cursor: pointer; transition: all 0.3s ease; backdrop-filter: blur(10px); border: 2px solid rgba(255,255,255,0.2); }
-    .tab-btn.active { background: #ffffff; color: #7c3aed; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3); transform: translateY(-3px); border-color: #ffffff; }
+    .tab-btn.active { background: #ffffff; color: #047857; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); transform: translateY(-3px); border-color: #ffffff; }
 
     .card { background: var(--card-bg); border-radius: 20px; padding: 24px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2); margin-bottom: 24px; }
     
     .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px; }
-    input { padding: 14px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 1rem; font-weight: 600; outline: none; width: 100%; transition: all 0.2s; background: #f8fafc; }
-    input:focus { border-color: #ff007a; background: #ffffff; box-shadow: 0 0 0 4px rgba(255, 0, 122, 0.15); }
-    .btn-add { background: var(--primary-grad); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 1.1rem; cursor: pointer; padding: 16px; transition: all 0.2s ease; width: 100%; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 8px 20px rgba(255, 0, 122, 0.4); }
-    .btn-add:hover { transform: scale(1.01); box-shadow: 0 10px 25px rgba(255, 0, 122, 0.6); }
+    input { padding: 14px; border: 2px solid #cbd5e1; border-radius: 12px; font-size: 1rem; font-weight: 600; outline: none; width: 100%; transition: all 0.2s; background: #f8fafc; }
+    input:focus { border-color: #10b981; background: #ffffff; box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2); }
+    .btn-add { background: var(--primary-btn); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 1.1rem; cursor: pointer; padding: 16px; transition: all 0.2s ease; width: 100%; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 8px 20px rgba(5, 150, 105, 0.4); }
+    .btn-add:hover { transform: scale(1.01); box-shadow: 0 10px 25px rgba(5, 150, 105, 0.6); }
 
     .table-container { overflow-x: auto; border-radius: 12px; }
     table { width: 100%; border-collapse: collapse; font-size: 1rem; }
-    th { text-align: left; padding: 16px 12px; color: #ffffff; font-weight: 800; background: #1e1b4b; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px; }
+    th { text-align: left; padding: 16px 12px; color: #ffffff; font-weight: 800; background: #064e3b; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px; }
     td { padding: 14px 12px; border-bottom: 2px solid #f1f5f9; font-weight: 600; }
-    tr:hover td { background-color: #f8fafc; }
+    tr:hover td { background-color: #f0fdf4; }
     
-    .row-charge { background-color: var(--warning-bg) !important; }
-    .badge-charge { background: #f59e0b; color: #ffffff; padding: 2px 6px; border-radius: 6px; font-size: 0.75rem; text-transform: uppercase; margin-left: 6px; }
+    .row-charges-total { background-color: var(--warning-bg) !important; border-left: 6px solid #f59e0b; }
 
     .amount { text-align: right; white-space: nowrap; font-family: 'Courier New', monospace; font-size: 1.1rem; font-weight: 800; }
-    .amount-plus { color: #059669; background: var(--success-bg); padding: 4px 8px; border-radius: 8px; display: inline-block; }
+    .amount-plus { color: #047857; background: var(--success-bg); padding: 4px 8px; border-radius: 8px; display: inline-block; }
     .amount-minus { color: var(--danger); background: var(--danger-bg); padding: 4px 8px; border-radius: 8px; display: inline-block; }
     .negative { color: var(--danger); font-weight: 900; }
     .center { text-align: center; }
 
-    .summary { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; align-items: center; background: #1e1b4b; border-radius: 14px; padding: 18px 24px; margin-top: 20px; font-weight: 800; color: #ffffff; font-size: 1rem; box-shadow: 0 8px 20px rgba(30, 27, 75, 0.3); }
-    .summary-val { font-size: 1.4rem; font-family: 'Courier New', monospace; color: #00f0ff; text-shadow: 0 0 10px rgba(0, 240, 255, 0.5); }
+    .summary { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; align-items: center; background: #064e3b; border-radius: 14px; padding: 18px 24px; margin-top: 20px; font-weight: 800; color: #ffffff; font-size: 1rem; box-shadow: 0 8px 20px rgba(6, 78, 59, 0.3); }
+    .summary-val { font-size: 1.4rem; font-family: 'Courier New', monospace; color: #6ee7b7; text-shadow: 0 0 10px rgba(110, 231, 183, 0.5); }
 
-    .btn-del { background: #ffe5ed; border: none; color: var(--danger); border-radius: 8px; cursor: pointer; font-size: 1.1rem; padding: 6px 12px; font-weight: 900; transition: 0.2s; }
+    .btn-del { background: #ffe4e6; border: none; color: var(--danger); border-radius: 8px; cursor: pointer; font-size: 1.1rem; padding: 6px 12px; font-weight: 900; transition: 0.2s; }
     .btn-del:hover { background: var(--danger); color: white; transform: scale(1.1); }
     
-    input[type="checkbox"] { width: 22px; height: 22px; accent-color: #ff007a; cursor: pointer; vertical-align: middle; }
+    input[type="checkbox"] { width: 22px; height: 22px; accent-color: #059669; cursor: pointer; vertical-align: middle; }
   </style>
 </head>
 <body>
 
-  <h1>⚡ Mes Comptes ⚡</h1>
+  <h1>🌿 Mes Comptes 🌿</h1>
 
   <div class="tabs">
     <button class="tab-btn active" onclick="switchPage('page1')">Dépenses & Revenus</button>
@@ -94,7 +93,8 @@
     
     let data = JSON.parse(localStorage.getItem('comptes_remi_data')) || {
       page1: [],
-      page2: []
+      page2: [],
+      chargesPointees: false
     };
 
     const form = document.getElementById('transaction-form');
@@ -173,9 +173,14 @@
       render();
     });
 
-    function togglePointage(id, pageSource) {
-      const page = pageSource || currentPage;
-      data[page] = data[page].map(t => t.id === id ? { ...t, pointage: !t.pointage } : t);
+    function togglePointage(id) {
+      data[currentPage] = data[currentPage].map(t => t.id === id ? { ...t, pointage: !t.pointage } : t);
+      save();
+      render();
+    }
+
+    function toggleGlobalCharges() {
+      data.chargesPointees = !data.chargesPointees;
       save();
       render();
     }
@@ -186,11 +191,17 @@
       render();
     }
 
+    function getTotalCharges() {
+      return data.page2.reduce((total, t) => total + t.retrait, 0);
+    }
+
     function render() {
       tableBody.innerHTML = '';
       let currentSolde = 0;
+      const totalCharges = getTotalCharges();
 
       if (currentPage === 'page1') {
+        // Solde initial
         tableBody.innerHTML += `
           <tr>
             <td style="color: var(--text-muted)">-</td>
@@ -204,75 +215,46 @@
           </tr>
         `;
 
-        let allItems = [];
+        // Ligne unique regroupant toutes les charges
+        if (totalCharges > 0) {
+          if (data.chargesPointees) {
+            currentSolde -= totalCharges;
+          }
 
-        data.page1.forEach(t => {
-          allItems.push({ ...t, isCharge: false, pageSource: 'page1' });
-        });
+          tableBody.innerHTML += `
+            <tr class="row-charges-total">
+              <td style="color: var(--text-muted)">—</td>
+              <td style="color: var(--text-muted)">—</td>
+              <td><strong style="color: #b45309;">Total Charges Mensuelles</strong></td>
+              <td class="amount"><span class="amount-minus">-${totalCharges.toFixed(2)} €</span></td>
+              <td class="amount">-</td>
+              <td class="amount ${currentSolde < 0 ? 'negative' : ''}">${currentSolde.toFixed(2)} €</td>
+              <td class="center">
+                <input type="checkbox" ${data.chargesPointees ? 'checked' : ''} onchange="toggleGlobalCharges()">
+              </td>
+              <td></td>
+            </tr>
+          `;
+        }
 
-        data.page2.forEach(c => {
-          allItems.push({ ...c, date: '—', isCharge: true, pageSource: 'page2' });
-        });
+        // Tri des opérations courantes
+        const sortedOps = [...data.page1].sort((a, b) => new Date(a.date) - new Date(b.date));
 
-        allItems.sort((a, b) => {
-          if (a.date === '—') return -1;
-          if (b.date === '—') return 1;
-          return new Date(a.date) - new Date(b.date);
-        });
-
-        let totalChargesAvenir = 0;
-        let totalChargesPointees = 0;
-
-        data.page2.forEach(c => {
-          totalChargesAvenir += c.retrait;
-          if (c.pointage) totalChargesPointees += c.retrait;
-        });
-
-        allItems.forEach(t => {
+        sortedOps.forEach(t => {
           if (t.pointage) {
             currentSolde = currentSolde - t.retrait + t.versement;
           }
 
           const row = document.createElement('tr');
-          if (t.isCharge) row.classList.add('row-charge');
-
           row.innerHTML = `
             <td style="color: var(--text-muted)">${t.date}</td>
             <td style="color: var(--text-muted)">${t.cheque || '-'}</td>
-            <td>
-              <strong>${t.ordre}</strong>
-              ${t.isCharge ? '<span class="badge-charge">Charge</span>' : ''}
-            </td>
+            <td><strong>${t.ordre}</strong></td>
             <td class="amount">${t.retrait > 0 ? '<span class="amount-minus">-' + t.retrait.toFixed(2) + ' €</span>' : ''}</td>
             <td class="amount">${t.versement > 0 ? '<span class="amount-plus">+' + t.versement.toFixed(2) + ' €</span>' : ''}</td>
             <td class="amount ${currentSolde < 0 ? 'negative' : ''}">${currentSolde.toFixed(2)} €</td>
             <td class="center">
-              <input type="checkbox" ${t.pointage ? 'checked' : ''} onchange="togglePointage(${t.id}, '${t.pageSource}')">
-            </td>
-            <td class="center">
-              ${!t.isCharge ? `<button class="btn-del" onclick="deleteTransaction(${t.id})">✕</button>` : ''}
-            </td>
-          `;
-          tableBody.appendChild(row);
-        });
-
-        summaryBar.innerHTML = `
-          <span>Total charges du mois : <strong style="color: #f59e0b;">${totalChargesAvenir.toFixed(2)} €</strong></span>
-          <span>Prélevées : <strong style="color: #ff007a;">${totalChargesPointees.toFixed(2)} €</strong></span>
-          <span>Solde disponible : <strong class="summary-val ${currentSolde < 0 ? 'negative' : ''}">${currentSolde.toFixed(2)} €</strong></span>
-        `;
-
-      } else {
-        let totalCharges = 0;
-        data.page2.forEach(t => {
-          totalCharges += t.retrait;
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td style="color: var(--text-muted)">${t.cheque || '-'}</td>
-            <td><strong>${t.ordre}</strong></td>
-            <td class="amount"><span class="amount-minus">-${t.retrait.toFixed(2)} €</span></td>
-            <td class="center">
-              <input type="checkbox" ${t.pointage ? 'checked' : ''} onchange="togglePointage(${t.id}, 'page2')">
+              <input type="checkbox" ${t.pointage ? 'checked' : ''} onchange="togglePointage(${t.id})">
             </td>
             <td class="center">
               <button class="btn-del" onclick="deleteTransaction(${t.id})">✕</button>
@@ -282,8 +264,32 @@
         });
 
         summaryBar.innerHTML = `
-          <span>Total charges mensuelles enregistrées :</span>
-          <strong class="summary-val" style="color: #ff007a;">-${totalCharges.toFixed(2)} €</strong>
+          <span>Total charges du mois : <strong style="color: #f59e0b;">${totalCharges.toFixed(2)} €</strong></span>
+          <span>Statut charges : <strong>${data.chargesPointees ? 'Prélevées' : 'En attente'}</strong></span>
+          <span>Solde disponible : <strong class="summary-val ${currentSolde < 0 ? 'negative' : ''}">${currentSolde.toFixed(2)} €</strong></span>
+        `;
+
+      } else {
+        // Feuille 2 : Détail des charges
+        data.page2.forEach(t => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td style="color: var(--text-muted)">${t.cheque || '-'}</td>
+            <td><strong>${t.ordre}</strong></td>
+            <td class="amount"><span class="amount-minus">-${t.retrait.toFixed(2)} €</span></td>
+            <td class="center">
+              <input type="checkbox" ${t.pointage ? 'checked' : ''} onchange="togglePointage(${t.id})">
+            </td>
+            <td class="center">
+              <button class="btn-del" onclick="deleteTransaction(${t.id})">✕</button>
+            </td>
+          `;
+          tableBody.appendChild(row);
+        });
+
+        summaryBar.innerHTML = `
+          <span>Total des charges mensuelles détaillées :</span>
+          <strong class="summary-val" style="color: #6ee7b7;">-${totalCharges.toFixed(2)} €</strong>
         `;
       }
     }

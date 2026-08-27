@@ -34,7 +34,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
     body { background: var(--bg-gradient); color: #0f172a; padding: 12px 10px; min-height: 100vh; max-width: 1000px; margin: 0 auto; }
     
-    h1 { font-size: 1.8rem; margin-bottom: 16px; color: #ffffff; font-weight: 900; text-align: center; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 3px 10px rgba(0,0,0,0.3); }
+    h1 { font-size: 1.8rem; margin-bottom: 8px; color: #ffffff; font-weight: 900; text-align: center; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 3px 10px rgba(0,0,0,0.3); }
 
     .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
     .tab-btn { flex: 1; padding: 14px 8px; border: none; background: rgba(255, 255, 255, 0.1); border-radius: 14px; font-weight: 800; font-size: 0.95rem; color: #ffffff; cursor: pointer; transition: all 0.3s ease; backdrop-filter: blur(10px); border: 2px solid rgba(255,255,255,0.15); text-align: center; }
@@ -102,14 +102,17 @@
       vertical-align: middle; 
     }
 
-    .sync-status { text-align: center; color: #a7f3d0; font-size: 0.8rem; font-weight: 700; margin-top: -10px; margin-bottom: 12px; }
+    .sync-status { text-align: center; color: #a7f3d0; font-size: 0.8rem; font-weight: 700; margin-top: -4px; margin-bottom: 12px; }
+    .user-key-badge { background: rgba(255,255,255,0.15); color: #cbd5e1; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px; font-family: monospace; display: inline-block; }
     .tag-reserve { background: var(--reserve-color); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-right: 4px; text-transform: uppercase; }
   </style>
 </head>
 <body>
 
   <h1>💳 Mes Comptes 💳</h1>
-  <div class="sync-status" id="sync-status">🟢 Synchronisation Firebase Active</div>
+  <div class="sync-status">
+    🟢 Synchronisation Firebase Active | <span class="user-key-badge" id="user-badge">Clé : ...</span>
+  </div>
 
   <div class="tabs">
     <button class="tab-btn active" onclick="switchPage('page1')">Dépenses & Revenus</button>
@@ -137,7 +140,6 @@
   </div>
 
   <script>
-    // Enregistrement du Service Worker pour autoriser l'installation en tant qu'Application
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').catch(() => {});
     }
@@ -147,6 +149,32 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
+    // --- Gestion de la Clé Unique d'Utilisateur ---
+    function getUserKey() {
+      const urlParams = new URLSearchParams(window.location.search);
+      let user = urlParams.get('user');
+      
+      if (!user) {
+        user = localStorage.getItem('mes_comptes_user_key');
+      }
+
+      if (!user) {
+        user = 'usr_' + Math.random().toString(36).substr(2, 9);
+      }
+
+      localStorage.setItem('mes_comptes_user_key', user);
+
+      if (!urlParams.get('user')) {
+        const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?user=' + user;
+        window.history.replaceState({ path: newUrl }, '', newUrl);
+      }
+      return user;
+    }
+
+    const currentUserId = getUserKey();
+    document.getElementById('user-badge').textContent = 'Clé : ' + currentUserId;
+
+    // --- Firebase Setup ---
     const firebaseConfig = {
       apiKey: "AIzaSyCHh9JL1E3Trgxv-XGdoCyR8Ay8SIWepBo",
       authDomain: "mes-comptes-7a597.firebaseapp.com",
@@ -159,7 +187,8 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    const dbRef = ref(db, 'comptes_data');
+    // Emplacement privé propre à l'utilisateur
+    const dbRef = ref(db, 'comptes_data/' + currentUserId);
 
     let currentPage = 'page1';
     let data = { page1: [], page2: [] };
@@ -171,6 +200,8 @@
           page1: val.page1 || [],
           page2: val.page2 || []
         };
+      } else {
+        data = { page1: [], page2: [] };
       }
       render();
     });

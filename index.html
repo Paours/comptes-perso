@@ -11,13 +11,11 @@
       --text-color: #0f172a;
       --text-muted: #64748b;
       --primary-grad: linear-gradient(90deg, #ff007a 0%, #7e22ce 100%);
-      --tab-inactive: #e2e8f0;
       --danger: #ff0055;
       --danger-bg: #ffe5ed;
       --success: #00d68f;
       --success-bg: #d1fae5;
       --warning-bg: #fff3c4;
-      --warning-border: #f59e0b;
       --border: #cbd5e1;
     }
 
@@ -26,45 +24,39 @@
     
     h1 { font-size: 2.2rem; margin-bottom: 20px; color: #ffffff; font-weight: 900; text-align: center; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 3px 10px rgba(0,0,0,0.3); }
 
-    /* Navigation par onglets */
     .tabs { display: flex; gap: 12px; margin-bottom: 20px; }
-    .tab-btn { flex: 1; padding: 16px; border: none; background: rgba(255, 255, 255, 0.2); border-radius: 16px; font-weight: 800; font-size: 1.05rem; color: #ffffff; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); backdrop-filter: blur(10px); border: 2px solid rgba(255,255,255,0.2); }
+    .tab-btn { flex: 1; padding: 16px; border: none; background: rgba(255, 255, 255, 0.2); border-radius: 16px; font-weight: 800; font-size: 1.05rem; color: #ffffff; cursor: pointer; transition: all 0.3s ease; backdrop-filter: blur(10px); border: 2px solid rgba(255,255,255,0.2); }
     .tab-btn.active { background: #ffffff; color: #7c3aed; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3); transform: translateY(-3px); border-color: #ffffff; }
 
-    /* Cartes */
     .card { background: var(--card-bg); border-radius: 20px; padding: 24px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2); margin-bottom: 24px; }
     
-    /* Formulaire */
     .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px; }
     input { padding: 14px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 1rem; font-weight: 600; outline: none; width: 100%; transition: all 0.2s; background: #f8fafc; }
     input:focus { border-color: #ff007a; background: #ffffff; box-shadow: 0 0 0 4px rgba(255, 0, 122, 0.15); }
     .btn-add { background: var(--primary-grad); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 1.1rem; cursor: pointer; padding: 16px; transition: all 0.2s ease; width: 100%; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 8px 20px rgba(255, 0, 122, 0.4); }
     .btn-add:hover { transform: scale(1.01); box-shadow: 0 10px 25px rgba(255, 0, 122, 0.6); }
 
-    /* Tableau */
     .table-container { overflow-x: auto; border-radius: 12px; }
     table { width: 100%; border-collapse: collapse; font-size: 1rem; }
     th { text-align: left; padding: 16px 12px; color: #ffffff; font-weight: 800; background: #1e1b4b; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px; }
     td { padding: 14px 12px; border-bottom: 2px solid #f1f5f9; font-weight: 600; }
     tr:hover td { background-color: #f8fafc; }
     
-    .row-charges { background-color: var(--warning-bg) !important; border-left: 6px solid var(--warning-border); }
-    
+    .row-charge { background-color: var(--warning-bg) !important; }
+    .badge-charge { background: #f59e0b; color: #ffffff; padding: 2px 6px; border-radius: 6px; font-size: 0.75rem; text-transform: uppercase; margin-left: 6px; }
+
     .amount { text-align: right; white-space: nowrap; font-family: 'Courier New', monospace; font-size: 1.1rem; font-weight: 800; }
     .amount-plus { color: #059669; background: var(--success-bg); padding: 4px 8px; border-radius: 8px; display: inline-block; }
     .amount-minus { color: var(--danger); background: var(--danger-bg); padding: 4px 8px; border-radius: 8px; display: inline-block; }
     .negative { color: var(--danger); font-weight: 900; }
     .center { text-align: center; }
 
-    /* Résumé */
     .summary { display: flex; justify-content: space-between; align-items: center; background: #1e1b4b; border-radius: 14px; padding: 18px 24px; margin-top: 20px; font-weight: 800; color: #ffffff; font-size: 1.1rem; box-shadow: 0 8px 20px rgba(30, 27, 75, 0.3); }
     .summary-val { font-size: 1.4rem; font-family: 'Courier New', monospace; color: #00f0ff; text-shadow: 0 0 10px rgba(0, 240, 255, 0.5); }
 
-    /* Bouton supprimer */
     .btn-del { background: #ffe5ed; border: none; color: var(--danger); border-radius: 8px; cursor: pointer; font-size: 1.1rem; padding: 6px 12px; font-weight: 900; transition: 0.2s; }
     .btn-del:hover { background: var(--danger); color: white; transform: scale(1.1); }
     
-    /* Checkbox pointage */
     input[type="checkbox"] { width: 22px; height: 22px; accent-color: #ff007a; cursor: pointer; vertical-align: middle; }
   </style>
 </head>
@@ -79,9 +71,7 @@
 
   <div class="card">
     <form id="transaction-form">
-      <div class="form-grid" id="form-fields">
-        <!-- Injecté dynamiquement -->
-      </div>
+      <div class="form-grid" id="form-fields"></div>
       <button type="submit" class="btn-add">+ Ajouter l'opération</button>
     </form>
   </div>
@@ -90,9 +80,7 @@
     <div class="table-container">
       <table>
         <thead>
-          <tr id="table-head">
-            <!-- Injecté dynamiquement -->
-          </tr>
+          <tr id="table-head"></tr>
         </thead>
         <tbody id="table-body"></tbody>
       </table>
@@ -185,8 +173,9 @@
       render();
     });
 
-    function togglePointage(id) {
-      data[currentPage] = data[currentPage].map(t => t.id === id ? { ...t, pointage: !t.pointage } : t);
+    function togglePointage(id, pageSource) {
+      const page = pageSource || currentPage;
+      data[page] = data[page].map(t => t.id === id ? { ...t, pointage: !t.pointage } : t);
       save();
       render();
     }
@@ -197,17 +186,12 @@
       render();
     }
 
-    function getTotalCharges() {
-      return data.page2.reduce((total, t) => total + t.retrait, 0);
-    }
-
     function render() {
       tableBody.innerHTML = '';
       let currentSolde = 0;
-      const transactions = data[currentPage];
-      const totalCharges = getTotalCharges();
 
       if (currentPage === 'page1') {
+        // Solde initial
         tableBody.innerHTML += `
           <tr>
             <td style="color: var(--text-muted)">-</td>
@@ -221,58 +205,76 @@
           </tr>
         `;
 
-        if (totalCharges > 0) {
-          currentSolde -= totalCharges;
-          tableBody.innerHTML += `
-            <tr class="row-charges">
-              <td style="color: var(--text-muted)">-</td>
-              <td style="color: var(--text-muted)">-</td>
-              <td><strong style="color: #b45309;">Total Charges Mensuelles</strong></td>
-              <td class="amount"><span class="amount-minus">-${totalCharges.toFixed(2)} €</span></td>
-              <td class="amount">-</td>
-              <td class="amount ${currentSolde < 0 ? 'negative' : ''}">${currentSolde.toFixed(2)} €</td>
-              <td class="center">-</td>
-              <td></td>
-            </tr>
-          `;
-        }
+        // fusionner opérations courantes et charges pour la vue
+        let allItems = [];
 
-        transactions.sort((a, b) => new Date(a.date) - new Date(b.date));
+        data.page1.forEach(t => {
+          allItems.push({ ...t, isCharge: false, pageSource: 'page1' });
+        });
 
-        transactions.forEach(t => {
-          currentSolde = currentSolde - t.retrait + t.versement;
+        data.page2.forEach(c => {
+          allItems.push({ ...c, date: '—', isCharge: true, pageSource: 'page2' });
+        });
+
+        // trier par date pour les courantes
+        allItems.sort((a, b) => {
+          if (a.date === '—') return -1;
+          if (b.date === '—') return 1;
+          return new Date(a.date) - new Date(b.date);
+        });
+
+        let totalPointesCharges = 0;
+
+        allItems.forEach(t => {
+          // Si l'opération est pointée (ou si c'est une charge pointée), on déduit du solde
+          if (t.pointage) {
+            currentSolde = currentSolde - t.retrait + t.versement;
+          }
+
+          if (t.isCharge && t.pointage) {
+            totalPointesCharges += t.retrait;
+          }
+
           const row = document.createElement('tr');
+          if (t.isCharge) row.classList.add('row-charge');
+
           row.innerHTML = `
             <td style="color: var(--text-muted)">${t.date}</td>
             <td style="color: var(--text-muted)">${t.cheque || '-'}</td>
-            <td><strong>${t.ordre}</strong></td>
+            <td>
+              <strong>${t.ordre}</strong>
+              ${t.isCharge ? '<span class="badge-charge">Charge</span>' : ''}
+            </td>
             <td class="amount">${t.retrait > 0 ? '<span class="amount-minus">-' + t.retrait.toFixed(2) + ' €</span>' : ''}</td>
             <td class="amount">${t.versement > 0 ? '<span class="amount-plus">+' + t.versement.toFixed(2) + ' €</span>' : ''}</td>
             <td class="amount ${currentSolde < 0 ? 'negative' : ''}">${currentSolde.toFixed(2)} €</td>
             <td class="center">
-              <input type="checkbox" ${t.pointage ? 'checked' : ''} onchange="togglePointage(${t.id})">
+              <input type="checkbox" ${t.pointage ? 'checked' : ''} onchange="togglePointage(${t.id}, '${t.pageSource}')">
             </td>
             <td class="center">
-              <button class="btn-del" onclick="deleteTransaction(${t.id})">✕</button>
+              ${!t.isCharge ? `<button class="btn-del" onclick="deleteTransaction(${t.id})">✕</button>` : ''}
             </td>
           `;
           tableBody.appendChild(row);
         });
 
         summaryBar.innerHTML = `
-          <span>Charges déduites : <strong style="color: #ff007a;">${totalCharges.toFixed(2)} €</strong></span>
-          <span>Solde disponible : <strong class="summary-val ${currentSolde < 0 ? 'negative' : ''}">${currentSolde.toFixed(2)} €</strong></span>
+          <span>Charges prélevées (pointées) : <strong style="color: #ff007a;">${totalPointesCharges.toFixed(2)} €</strong></span>
+          <span>Solde pointé disponible : <strong class="summary-val ${currentSolde < 0 ? 'negative' : ''}">${currentSolde.toFixed(2)} €</strong></span>
         `;
 
       } else {
-        transactions.forEach(t => {
+        // Vue Onglet Charges Mensuelles
+        let totalCharges = 0;
+        data.page2.forEach(t => {
+          totalCharges += t.retrait;
           const row = document.createElement('tr');
           row.innerHTML = `
             <td style="color: var(--text-muted)">${t.cheque || '-'}</td>
             <td><strong>${t.ordre}</strong></td>
             <td class="amount"><span class="amount-minus">-${t.retrait.toFixed(2)} €</span></td>
             <td class="center">
-              <input type="checkbox" ${t.pointage ? 'checked' : ''} onchange="togglePointage(${t.id})">
+              <input type="checkbox" ${t.pointage ? 'checked' : ''} onchange="togglePointage(${t.id}, 'page2')">
             </td>
             <td class="center">
               <button class="btn-del" onclick="deleteTransaction(${t.id})">✕</button>
@@ -282,7 +284,7 @@
         });
 
         summaryBar.innerHTML = `
-          <span>Total charges mensuelles :</span>
+          <span>Total charges mensuelles enregistrées :</span>
           <strong class="summary-val" style="color: #ff007a;">-${totalCharges.toFixed(2)} €</strong>
         `;
       }

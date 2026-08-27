@@ -59,7 +59,12 @@
       width: 100%; 
       transition: all 0.2s; 
       background: #f8fafc; 
+      color: #0f172a;
       -webkit-appearance: none; 
+      min-height: 48px;
+    }
+    input[type="date"]::-webkit-date-and-time-value {
+      text-align: left;
     }
     input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus { 
       border-color: #3b82f6; 
@@ -195,7 +200,7 @@
     let currentPage = 'page1';
     let data = { page1: [], page2: [] };
 
-    // MIGRATION AUTOMATIQUE : Récupère les données d'origine s'il y en a
+    // MIGRATION AUTOMATIQUE
     async function checkAndMigrateOldData() {
       const userSnap = await get(userDbRef);
       if (!userSnap.exists()) {
@@ -203,7 +208,6 @@
         if (oldSnap.exists()) {
           const oldData = oldSnap.val();
           if (oldData && (oldData.page1 || oldData.page2)) {
-            // Copie l'ancienne base directement sur la nouvelle clé
             await set(userDbRef, oldData);
           }
         }
@@ -243,8 +247,9 @@
       const tableHead = document.getElementById('table-head');
 
       if (currentPage === 'page1') {
+        const today = new Date().toISOString().split('T')[0];
         formFields.innerHTML = `
-          <input type="date" id="date" required>
+          <input type="date" id="date" value="${today}" required>
           <input type="text" id="cheque" placeholder="Chèque (optionnel)">
           <input type="text" id="ordre" placeholder="Libellé / Intitulé" required>
           <input type="number" step="0.01" id="retrait" placeholder="Retrait (€)">
@@ -312,7 +317,13 @@
 
       data[currentPage].push(newEntry);
       save();
+      
+      // Réinitialise le formulaire en gardant la date du jour
       e.target.reset();
+      const dateEl = document.getElementById('date');
+      if (dateEl) {
+        dateEl.value = new Date().toISOString().split('T')[0];
+      }
     });
 
     window.togglePointage = function(id, pageSource) {
@@ -337,6 +348,15 @@
 
     function getNetChargesPointees() {
       return data.page2.filter(t => t.pointage).reduce((total, t) => total + (t.versement - t.retrait), 0);
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '-';
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+      return dateStr;
     }
 
     function render() {
@@ -395,7 +415,7 @@
           if (t.isReserve) row.classList.add('row-reserve');
 
           row.innerHTML = `
-            <td style="color: var(--text-muted)">${t.date}</td>
+            <td style="color: var(--text-muted)">${formatDate(t.date)}</td>
             <td style="color: var(--text-muted)">${t.cheque || '-'}</td>
             <td>${t.isReserve ? '<span class="tag-reserve">Réserve</span>' : ''} <strong>${t.ordre}</strong></td>
             <td class="amount">${t.retrait > 0 ? '<span class="amount-minus">-' + t.retrait.toFixed(2) + ' €</span>' : ''}</td>

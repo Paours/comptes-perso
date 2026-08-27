@@ -4,6 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mes Comptes</title>
+  
+  <!-- Configuration PWA (Installation Application) -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1e293b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Comptes">
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2845/2845722.png">
+
   <style>
     :root {
       --bg-gradient: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
@@ -69,7 +78,6 @@
     
     .row-reserve { background-color: var(--reserve-bg) !important; color: var(--reserve-color); }
     .row-charges-total { background-color: var(--warning-bg) !important; border-left: 4px solid #f59e0b; }
-    .row-charges-estime { background-color: var(--info-bg) !important; border-left: 4px solid #3b82f6; }
 
     .amount { text-align: right; white-space: nowrap; font-family: 'Courier New', monospace; font-size: 0.95rem; font-weight: 800; }
     .amount-plus { color: #10b981; background: var(--success-bg); padding: 3px 6px; border-radius: 6px; display: inline-block; }
@@ -127,6 +135,13 @@
 
     <div class="summary-grid" id="summary-bar"></div>
   </div>
+
+  <script>
+    // Enregistrement du Service Worker pour autoriser l'installation en tant qu'Application
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    }
+  </script>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -194,7 +209,7 @@
           <th>Libellé</th>
           <th class="amount">Retrait</th>
           <th class="amount">Versement</th>
-          <th class="amount">Solde</th>
+          <th class="amount">Solde Total</th>
           <th class="center">Pointé</th>
           <th class="center">Action</th>
         `;

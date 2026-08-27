@@ -6,60 +6,67 @@
   <title>Mes Comptes</title>
   <style>
     :root {
-      --bg-color: #f8fafc;
+      --bg-gradient: linear-gradient(135deg, #e0f2fe 0%, #f1f5f9 100%);
       --card-bg: #ffffff;
-      --text-color: #0f172a;
+      --text-color: #1e293b;
       --text-muted: #64748b;
-      --primary: #2563eb;
-      --primary-hover: #1d4ed8;
+      --primary: #3b82f6;
+      --primary-dark: #1d4ed8;
+      --primary-light: #eff6ff;
       --danger: #ef4444;
+      --danger-light: #fef2f2;
       --success: #10b981;
-      --border: #e2e8f0;
+      --success-light: #ecfdf5;
+      --warning-bg: #fffbe3;
+      --warning-border: #fde047;
+      --border: #cbd5e1;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background-color: var(--bg-color); color: var(--text-color); padding: 16px; max-width: 1000px; margin: 0 auto; }
+    body { background: var(--bg-gradient); color: var(--text-color); padding: 20px 16px; min-height: 100vh; max-width: 1000px; margin: 0 auto; }
     
-    h1 { font-size: 1.5rem; margin-bottom: 16px; color: var(--text-color); font-weight: 700; }
+    h1 { font-size: 1.8rem; margin-bottom: 20px; color: #0f172a; font-weight: 800; text-shadow: 0 1px 2px rgba(0,0,0,0.05); }
 
     /* Navigation par onglets */
-    .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
-    .tab-btn { flex: 1; padding: 12px; border: none; background: #e2e8f0; border-radius: 10px; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: 0.2s; }
-    .tab-btn.active { background: var(--primary); color: white; }
+    .tabs { display: flex; gap: 10px; margin-bottom: 16px; }
+    .tab-btn { flex: 1; padding: 14px; border: none; background: #cbd5e1; border-radius: 12px; font-weight: 700; color: #475569; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .tab-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35); transform: translateY(-1px); }
 
     /* Cartes */
-    .card { background: var(--card-bg); border-radius: 14px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid var(--border); margin-bottom: 16px; }
+    .card { background: var(--card-bg); border-radius: 16px; padding: 20px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01); border: 1px solid rgba(255,255,255,0.8); margin-bottom: 20px; }
     
     /* Formulaire */
-    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 12px; }
-    input { padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; outline: none; width: 100%; }
-    input:focus { border-color: var(--primary); }
-    .btn-add { background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; padding: 10px; transition: 0.2s; width: 100%; }
-    .btn-add:hover { background: var(--primary-hover); }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 14px; }
+    input { padding: 12px 14px; border: 2px solid var(--border); border-radius: 10px; font-size: 0.95rem; outline: none; width: 100%; transition: border-color 0.2s; background: #f8fafc; }
+    input:focus { border-color: var(--primary); background: white; }
+    .btn-add { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 1rem; cursor: pointer; padding: 12px; transition: all 0.2s ease; width: 100%; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25); }
+    .btn-add:hover { transform: translateY(-1px); box-shadow: 0 6px 15px rgba(37, 99, 235, 0.35); }
 
     /* Tableau */
     .table-container { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-    th { text-align: left; padding: 12px 8px; color: var(--text-muted); font-weight: 600; border-bottom: 2px solid var(--border); }
-    td { padding: 12px 8px; border-bottom: 1px solid var(--border); }
-    tr:last-child td { border-bottom: none; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+    th { text-align: left; padding: 14px 10px; color: #475569; font-weight: 700; border-bottom: 2px solid var(--border); background: #f1f5f9; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px; }
+    td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
+    tr:hover td { background-color: #f8fafc; }
     
-    .amount { text-align: right; white-space: nowrap; }
-    .amount-plus { color: var(--success); font-weight: 600; }
-    .amount-minus { color: var(--danger); font-weight: 600; }
-    .negative { color: var(--danger); font-weight: 700; }
+    .row-charges { background-color: var(--warning-bg) !important; border-left: 4px solid #f59e0b; }
+    
+    .amount { text-align: right; white-space: nowrap; font-family: monospace, sans-serif; font-size: 1rem; }
+    .amount-plus { color: var(--success); font-weight: 700; }
+    .amount-minus { color: var(--danger); font-weight: 700; }
+    .negative { color: var(--danger); font-weight: 800; }
     .center { text-align: center; }
 
-    /* Résumé / Kpis */
-    .summary { display: flex; justify-content: space-between; align-items: center; background: #eff6ff; border-radius: 10px; padding: 12px 16px; margin-top: 12px; font-weight: 600; }
-    .summary-val { font-size: 1.1rem; }
+    /* Résumé */
+    .summary { display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border: 1px solid #bfdbfe; border-radius: 12px; padding: 14px 20px; margin-top: 16px; font-weight: 700; color: #1e40af; }
+    .summary-val { font-size: 1.25rem; font-family: monospace, sans-serif; }
 
     /* Bouton supprimer */
-    .btn-del { background: transparent; border: none; color: #94a3b8; cursor: pointer; font-size: 1rem; padding: 4px; }
-    .btn-del:hover { color: var(--danger); }
+    .btn-del { background: #fee2e2; border: none; color: var(--danger); border-radius: 6px; cursor: pointer; font-size: 0.9rem; padding: 6px 10px; font-weight: 700; transition: 0.2s; }
+    .btn-del:hover { background: var(--danger); color: white; }
     
     /* Checkbox pointage */
-    input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; }
+    input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--primary); cursor: pointer; vertical-align: middle; }
   </style>
 </head>
 <body>
@@ -68,17 +75,13 @@
 
   <div class="tabs">
     <button class="tab-btn active" onclick="switchPage('page1')">Dépenses & Revenus</button>
-    <button class="tab-btn" onclick="switchPage('page2')">Charges</button>
+    <button class="tab-btn" onclick="switchPage('page2')">Charges Mensuelles</button>
   </div>
 
   <div class="card">
     <form id="transaction-form">
-      <div class="form-grid">
-        <input type="date" id="date" required>
-        <input type="text" id="cheque" placeholder="Chèque (facultatif)">
-        <input type="text" id="ordre" placeholder="Libellé / Ordre" required>
-        <input type="number" step="0.01" id="retrait" placeholder="Retrait (€)">
-        <input type="number" step="0.01" id="versement" placeholder="Versement (€)">
+      <div class="form-grid" id="form-fields">
+        <!-- Champs injectés dynamiquement -->
       </div>
       <button type="submit" class="btn-add">+ Ajouter l'opération</button>
     </form>
@@ -88,15 +91,8 @@
     <div class="table-container">
       <table>
         <thead>
-          <tr>
-            <th>Date</th>
-            <th>Chèque</th>
-            <th>Libellé</th>
-            <th class="amount">Retrait</th>
-            <th class="amount">Versement</th>
-            <th class="amount">Solde</th>
-            <th class="center">Pointé</th>
-            <th class="center"></th>
+          <tr id="table-head">
+            <!-- En-têtes injectés dynamiquement -->
           </tr>
         </thead>
         <tbody id="table-body"></tbody>
@@ -115,6 +111,8 @@
     };
 
     const form = document.getElementById('transaction-form');
+    const formFields = document.getElementById('form-fields');
+    const tableHead = document.getElementById('table-head');
     const tableBody = document.getElementById('table-body');
     const summaryBar = document.getElementById('summary-bar');
 
@@ -127,20 +125,62 @@
       document.querySelectorAll('.tab-btn').forEach((btn, index) => {
         btn.classList.toggle('active', (page === 'page1' && index === 0) || (page === 'page2' && index === 1));
       });
+      updateFormAndHead();
       render();
+    }
+
+    function updateFormAndHead() {
+      if (currentPage === 'page1') {
+        formFields.innerHTML = `
+          <input type="date" id="date" required>
+          <input type="text" id="cheque" placeholder="Chèque (facultatif)">
+          <input type="text" id="ordre" placeholder="Libellé / Ordre" required>
+          <input type="number" step="0.01" id="retrait" placeholder="Retrait (€)">
+          <input type="number" step="0.01" id="versement" placeholder="Versement (€)">
+        `;
+        tableHead.innerHTML = `
+          <th>Date</th>
+          <th>Chèque</th>
+          <th>Libellé</th>
+          <th class="amount">Retrait</th>
+          <th class="amount">Versement</th>
+          <th class="amount">Solde</th>
+          <th class="center">Pointé</th>
+          <th class="center">Action</th>
+        `;
+      } else {
+        formFields.innerHTML = `
+          <input type="text" id="cheque" placeholder="Chèque (facultatif)">
+          <input type="text" id="ordre" placeholder="Nom de la charge (ex: Loyer...)" required>
+          <input type="number" step="0.01" id="retrait" placeholder="Montant Mensuel (€)" required>
+        `;
+        tableHead.innerHTML = `
+          <th>Chèque</th>
+          <th>Nom de la Charge</th>
+          <th class="amount">Montant Mensuel</th>
+          <th class="center">Pointé</th>
+          <th class="center">Action</th>
+        `;
+      }
     }
 
     form.addEventListener('submit', (e) => {
       e.preventDefault();
-      data[currentPage].push({
+      
+      const newEntry = {
         id: Date.now(),
-        date: document.getElementById('date').value,
         cheque: document.getElementById('cheque').value,
         ordre: document.getElementById('ordre').value,
         retrait: parseFloat(document.getElementById('retrait').value) || 0,
-        versement: parseFloat(document.getElementById('versement').value) || 0,
+        versement: currentPage === 'page1' ? (parseFloat(document.getElementById('versement').value) || 0) : 0,
         pointage: false
-      });
+      };
+
+      if (currentPage === 'page1') {
+        newEntry.date = document.getElementById('date').value;
+      }
+
+      data[currentPage].push(newEntry);
       save();
       form.reset();
       render();
@@ -159,7 +199,7 @@
     }
 
     function getTotalCharges() {
-      return data.page2.reduce((total, t) => total + t.retrait - t.versement, 0);
+      return data.page2.reduce((total, t) => total + t.retrait, 0);
     }
 
     function render() {
@@ -168,73 +208,91 @@
       const transactions = data[currentPage];
       const totalCharges = getTotalCharges();
 
-      // Solde Initial
-      tableBody.innerHTML += `
-        <tr>
-          <td style="color: var(--text-muted)">-</td>
-          <td style="color: var(--text-muted)">-</td>
-          <td><strong>Solde initial</strong></td>
-          <td class="amount">-</td>
-          <td class="amount">-</td>
-          <td class="amount"><strong>0,00 €</strong></td>
-          <td class="center">-</td>
-          <td></td>
-        </tr>
-      `;
-
-      // Déduction automatique des charges sur la page 1
-      if (currentPage === 'page1' && totalCharges > 0) {
-        currentSolde -= totalCharges;
+      if (currentPage === 'page1') {
+        // Solde initial
         tableBody.innerHTML += `
-          <tr style="background: #fefce8;">
+          <tr>
             <td style="color: var(--text-muted)">-</td>
             <td style="color: var(--text-muted)">-</td>
-            <td><strong>Total Charges (onglet Charges)</strong></td>
-            <td class="amount amount-minus">-${totalCharges.toFixed(2)} €</td>
+            <td><strong>Solde initial</strong></td>
             <td class="amount">-</td>
-            <td class="amount ${currentSolde < 0 ? 'negative' : ''}">${currentSolde.toFixed(2)} €</td>
+            <td class="amount">-</td>
+            <td class="amount"><strong>0,00 €</strong></td>
             <td class="center">-</td>
             <td></td>
           </tr>
         `;
-      }
 
-      transactions.sort((a, b) => new Date(a.date) - new Date(b.date));
+        // Total charges déduites
+        if (totalCharges > 0) {
+          currentSolde -= totalCharges;
+          tableBody.innerHTML += `
+            <tr class="row-charges">
+              <td style="color: var(--text-muted)">-</td>
+              <td style="color: var(--text-muted)">-</td>
+              <td><strong style="color: #b45309;">Total Charges Mensuelles</strong></td>
+              <td class="amount amount-minus">-${totalCharges.toFixed(2)} €</td>
+              <td class="amount">-</td>
+              <td class="amount ${currentSolde < 0 ? 'negative' : ''}">${currentSolde.toFixed(2)} €</td>
+              <td class="center">-</td>
+              <td></td>
+            </tr>
+          `;
+        }
 
-      transactions.forEach(t => {
-        currentSolde = currentSolde - t.retrait + t.versement;
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td style="color: var(--text-muted)">${t.date}</td>
-          <td style="color: var(--text-muted)">${t.cheque || '-'}</td>
-          <td><strong>${t.ordre}</strong></td>
-          <td class="amount amount-minus">${t.retrait > 0 ? '-' + t.retrait.toFixed(2) + ' €' : ''}</td>
-          <td class="amount amount-plus">${t.versement > 0 ? '+' + t.versement.toFixed(2) + ' €' : ''}</td>
-          <td class="amount ${currentSolde < 0 ? 'negative' : ''}">${currentSolde.toFixed(2)} €</td>
-          <td class="center">
-            <input type="checkbox" ${t.pointage ? 'checked' : ''} onchange="togglePointage(${t.id})">
-          </td>
-          <td class="center">
-            <button class="btn-del" onclick="deleteTransaction(${t.id})">✕</button>
-          </td>
-        `;
-        tableBody.appendChild(row);
-      });
+        transactions.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-      if (currentPage === 'page1') {
+        transactions.forEach(t => {
+          currentSolde = currentSolde - t.retrait + t.versement;
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td style="color: var(--text-muted)">${t.date}</td>
+            <td style="color: var(--text-muted)">${t.cheque || '-'}</td>
+            <td><strong>${t.ordre}</strong></td>
+            <td class="amount amount-minus">${t.retrait > 0 ? '-' + t.retrait.toFixed(2) + ' €' : ''}</td>
+            <td class="amount amount-plus">${t.versement > 0 ? '+' + t.versement.toFixed(2) + ' €' : ''}</td>
+            <td class="amount ${currentSolde < 0 ? 'negative' : ''}">${currentSolde.toFixed(2)} €</td>
+            <td class="center">
+              <input type="checkbox" ${t.pointage ? 'checked' : ''} onchange="togglePointage(${t.id})">
+            </td>
+            <td class="center">
+              <button class="btn-del" onclick="deleteTransaction(${t.id})">✕</button>
+            </td>
+          `;
+          tableBody.appendChild(row);
+        });
+
         summaryBar.innerHTML = `
           <span>Total charges déduites : <strong>${totalCharges.toFixed(2)} €</strong></span>
-          <span>Solde global : <strong class="summary-val ${currentSolde < 0 ? 'negative' : ''}">${currentSolde.toFixed(2)} €</strong></span>
+          <span>Solde disponible : <strong class="summary-val ${currentSolde < 0 ? 'negative' : ''}">${currentSolde.toFixed(2)} €</strong></span>
         `;
+
       } else {
-        const totalChargesPage2 = data.page2.reduce((sum, t) => sum + t.retrait, 0);
+        // Feuille Charges
+        transactions.forEach(t => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td style="color: var(--text-muted)">${t.cheque || '-'}</td>
+            <td><strong>${t.ordre}</strong></td>
+            <td class="amount amount-minus">-${t.retrait.toFixed(2)} €</td>
+            <td class="center">
+              <input type="checkbox" ${t.pointage ? 'checked' : ''} onchange="togglePointage(${t.id})">
+            </td>
+            <td class="center">
+              <button class="btn-del" onclick="deleteTransaction(${t.id})">✕</button>
+            </td>
+          `;
+          tableBody.appendChild(row);
+        });
+
         summaryBar.innerHTML = `
-          <span>Total des charges enregistrées :</span>
-          <strong class="summary-val">${totalChargesPage2.toFixed(2)} €</strong>
+          <span>Total des charges mensuelles récurrentes :</span>
+          <strong class="summary-val amount-minus">-${totalCharges.toFixed(2)} €</strong>
         `;
       }
     }
 
+    updateFormAndHead();
     render();
   </script>
 </body>

@@ -147,7 +147,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     // --- Gestion de la Clé Unique d'Utilisateur ---
     function getUserKey() {
@@ -187,27 +187,46 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    // Emplacement privé propre à l'utilisateur
-    const dbRef = ref(db, 'comptes_data/' + currentUserId);
+    
+    // Références Firebase
+    const oldDbRef = ref(db, 'comptes_data');
+    const userDbRef = ref(db, 'comptes_data_users/' + currentUserId);
 
     let currentPage = 'page1';
     let data = { page1: [], page2: [] };
 
-    onValue(dbRef, (snapshot) => {
-      const val = snapshot.val();
-      if (val) {
-        data = {
-          page1: val.page1 || [],
-          page2: val.page2 || []
-        };
-      } else {
-        data = { page1: [], page2: [] };
+    // MIGRATION AUTOMATIQUE : Récupère les données d'origine s'il y en a
+    async function checkAndMigrateOldData() {
+      const userSnap = await get(userDbRef);
+      if (!userSnap.exists()) {
+        const oldSnap = await get(oldDbRef);
+        if (oldSnap.exists()) {
+          const oldData = oldSnap.val();
+          if (oldData && (oldData.page1 || oldData.page2)) {
+            // Copie l'ancienne base directement sur la nouvelle clé
+            await set(userDbRef, oldData);
+          }
+        }
       }
-      render();
+    }
+
+    checkAndMigrateOldData().then(() => {
+      onValue(userDbRef, (snapshot) => {
+        const val = snapshot.val();
+        if (val) {
+          data = {
+            page1: val.page1 || [],
+            page2: val.page2 || []
+          };
+        } else {
+          data = { page1: [], page2: [] };
+        }
+        render();
+      });
     });
 
     function save() {
-      set(dbRef, data);
+      set(userDbRef, data);
     }
 
     window.switchPage = function(page) {

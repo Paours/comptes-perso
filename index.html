@@ -2,31 +2,58 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // --- Gestion de la Clé Unique d'Utilisateur ---
+    // --- Gestion Sécurisée de la Clé Unique ---
     function getUserKey() {
       const urlParams = new URLSearchParams(window.location.search);
-      let user = urlParams.get('user');
-      
-      if (!user) {
-        user = localStorage.getItem('mes_comptes_user_key');
+      let userParam = urlParams.get('user');
+      let storedUser = localStorage.getItem('mes_comptes_user_key');
+
+      // Si l'URL demande un "new" ou si aucune clé n'existe nulle part
+      if (userParam === 'new' || (!userParam && !storedUser)) {
+        const newKey = 'usr_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('mes_comptes_user_key', newKey);
+        
+        // Nettoyage propre de l'URL
+        const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?user=' + newKey;
+        window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+        return newKey;
       }
 
-      // Si aucune clé n'existe, on en génère une TOUTE NEUVE
-      if (!user) {
-        user = 'usr_' + Math.random().toString(36).substr(2, 9);
+      // Si une clé valide est passée dans l'URL, on l'adopte
+      if (userParam && userParam !== 'new') {
+        localStorage.setItem('mes_comptes_user_key', userParam);
+        return userParam;
       }
 
-      localStorage.setItem('mes_comptes_user_key', user);
-
-      if (!urlParams.get('user')) {
-        const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?user=' + user;
-        window.history.replaceState({ path: newUrl }, '', newUrl);
+      // Sinon on garde la clé stockée
+      if (storedUser) {
+        if (!urlParams.get('user')) {
+          const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?user=' + storedUser;
+          window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+        }
+        return storedUser;
       }
-      return user;
+
+      // Fallback au cas où
+      const fallbackKey = 'usr_' + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem('mes_comptes_user_key', fallbackKey);
+      return fallbackKey;
     }
 
     const currentUserId = getUserKey();
-    document.getElementById('user-badge').textContent = 'Clé : ' + currentUserId;
+    
+    // Affichage du badge avec option de changement de compte
+    const userBadgeEl = document.getElementById('user-badge');
+    if (userBadgeEl) {
+      userBadgeEl.innerHTML = `Clé : ${currentUserId} <button onclick="resetUserKey()" style="margin-left:8px;cursor:pointer;background:#ef4444;color:white;border:none;padding:2px 6px;border-radius:4px;font-size:11px;">Changer / Nouveau</button>`;
+    }
+
+    window.resetUserKey = function() {
+      if (confirm("Voulez-vous générer un nouvel accès vierge (ou changer de compte) ?")) {
+        localStorage.removeItem('mes_comptes_user_key');
+        window.location.href = window.location.pathname + '?user=new';
+      }
+    };
 
     // --- Firebase Setup ---
     const firebaseConfig = {
@@ -320,4 +347,4 @@
     }
 
     updateFormAndHead();
-  </script>
+</script>

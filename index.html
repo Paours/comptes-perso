@@ -6,17 +6,18 @@
   <title>Mes Comptes</title>
   <style>
     :root {
-      --bg-gradient: linear-gradient(135deg, #064e3b 0%, #047857 50%, #10b981 100%);
+      --bg-gradient: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
       --card-bg: #ffffff;
-      --text-color: #064e3b;
+      --text-color: #0f172a;
       --text-muted: #64748b;
-      --primary-btn: linear-gradient(90deg, #059669 0%, #10b981 100%);
-      --danger: #e11d48;
-      --danger-bg: #ffe4e6;
-      --success: #059669;
-      --success-bg: #d1fae5;
-      --warning-bg: #fef3c7;
-      --border: #a7f3d0;
+      --primary-grad: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%);
+      --danger: #ef4444;
+      --danger-bg: #fef2f2;
+      --success: #10b981;
+      --success-bg: #ecfdf5;
+      --warning-bg: #fffbe3;
+      --info-bg: #eff6ff;
+      --border: #cbd5e1;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
@@ -25,43 +26,44 @@
     h1 { font-size: 2.2rem; margin-bottom: 20px; color: #ffffff; font-weight: 900; text-align: center; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 3px 10px rgba(0,0,0,0.3); }
 
     .tabs { display: flex; gap: 12px; margin-bottom: 20px; }
-    .tab-btn { flex: 1; padding: 16px; border: none; background: rgba(255, 255, 255, 0.2); border-radius: 16px; font-weight: 800; font-size: 1.05rem; color: #ffffff; cursor: pointer; transition: all 0.3s ease; backdrop-filter: blur(10px); border: 2px solid rgba(255,255,255,0.2); }
-    .tab-btn.active { background: #ffffff; color: #047857; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); transform: translateY(-3px); border-color: #ffffff; }
+    .tab-btn { flex: 1; padding: 16px; border: none; background: rgba(255, 255, 255, 0.1); border-radius: 16px; font-weight: 800; font-size: 1.05rem; color: #ffffff; cursor: pointer; transition: all 0.3s ease; backdrop-filter: blur(10px); border: 2px solid rgba(255,255,255,0.15); }
+    .tab-btn.active { background: #3b82f6; color: #ffffff; box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4); transform: translateY(-3px); border-color: #60a5fa; }
 
-    .card { background: var(--card-bg); border-radius: 20px; padding: 24px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2); margin-bottom: 24px; }
+    .card { background: var(--card-bg); border-radius: 20px; padding: 24px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3); margin-bottom: 24px; }
     
     .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px; }
     input { padding: 14px; border: 2px solid #cbd5e1; border-radius: 12px; font-size: 1rem; font-weight: 600; outline: none; width: 100%; transition: all 0.2s; background: #f8fafc; }
-    input:focus { border-color: #10b981; background: #ffffff; box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2); }
-    .btn-add { background: var(--primary-btn); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 1.1rem; cursor: pointer; padding: 16px; transition: all 0.2s ease; width: 100%; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 8px 20px rgba(5, 150, 105, 0.4); }
-    .btn-add:hover { transform: scale(1.01); box-shadow: 0 10px 25px rgba(5, 150, 105, 0.6); }
+    input:focus { border-color: #3b82f6; background: #ffffff; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2); }
+    .btn-add { background: var(--primary-grad); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 1.1rem; cursor: pointer; padding: 16px; transition: all 0.2s ease; width: 100%; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4); }
+    .btn-add:hover { transform: scale(1.01); box-shadow: 0 10px 25px rgba(37, 99, 235, 0.6); }
 
     .table-container { overflow-x: auto; border-radius: 12px; }
     table { width: 100%; border-collapse: collapse; font-size: 1rem; }
-    th { text-align: left; padding: 16px 12px; color: #ffffff; font-weight: 800; background: #064e3b; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px; }
+    th { text-align: left; padding: 16px 12px; color: #ffffff; font-weight: 800; background: #1e293b; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px; }
     td { padding: 14px 12px; border-bottom: 2px solid #f1f5f9; font-weight: 600; }
-    tr:hover td { background-color: #f0fdf4; }
+    tr:hover td { background-color: #f8fafc; }
     
     .row-charges-total { background-color: var(--warning-bg) !important; border-left: 6px solid #f59e0b; }
+    .row-charges-estime { background-color: var(--info-bg) !important; border-left: 6px solid #3b82f6; }
 
     .amount { text-align: right; white-space: nowrap; font-family: 'Courier New', monospace; font-size: 1.1rem; font-weight: 800; }
-    .amount-plus { color: #047857; background: var(--success-bg); padding: 4px 8px; border-radius: 8px; display: inline-block; }
+    .amount-plus { color: #10b981; background: var(--success-bg); padding: 4px 8px; border-radius: 8px; display: inline-block; }
     .amount-minus { color: var(--danger); background: var(--danger-bg); padding: 4px 8px; border-radius: 8px; display: inline-block; }
     .negative { color: var(--danger); font-weight: 900; }
     .center { text-align: center; }
 
-    .summary { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; align-items: center; background: #064e3b; border-radius: 14px; padding: 18px 24px; margin-top: 20px; font-weight: 800; color: #ffffff; font-size: 1rem; box-shadow: 0 8px 20px rgba(6, 78, 59, 0.3); }
-    .summary-val { font-size: 1.4rem; font-family: 'Courier New', monospace; color: #6ee7b7; text-shadow: 0 0 10px rgba(110, 231, 183, 0.5); }
+    .summary { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; align-items: center; background: #0f172a; border-radius: 14px; padding: 18px 24px; margin-top: 20px; font-weight: 800; color: #ffffff; font-size: 1rem; box-shadow: 0 8px 20px rgba(15, 23, 42, 0.4); }
+    .summary-val { font-size: 1.4rem; font-family: 'Courier New', monospace; color: #38bdf8; text-shadow: 0 0 10px rgba(56, 189, 248, 0.5); }
 
-    .btn-del { background: #ffe4e6; border: none; color: var(--danger); border-radius: 8px; cursor: pointer; font-size: 1.1rem; padding: 6px 12px; font-weight: 900; transition: 0.2s; }
+    .btn-del { background: #fef2f2; border: none; color: var(--danger); border-radius: 8px; cursor: pointer; font-size: 1.1rem; padding: 6px 12px; font-weight: 900; transition: 0.2s; }
     .btn-del:hover { background: var(--danger); color: white; transform: scale(1.1); }
     
-    input[type="checkbox"] { width: 22px; height: 22px; accent-color: #059669; cursor: pointer; vertical-align: middle; }
+    input[type="checkbox"] { width: 22px; height: 22px; accent-color: #3b82f6; cursor: pointer; vertical-align: middle; }
   </style>
 </head>
 <body>
 
-  <h1>🌿 Mes Comptes 🌿</h1>
+  <h1>💳 Mes Comptes 💳</h1>
 
   <div class="tabs">
     <button class="tab-btn active" onclick="switchPage('page1')">Dépenses & Revenus</button>
@@ -135,6 +137,7 @@
           <th class="center">Action</th>
         `;
       } else {
+        const allChecked = data.page2.length > 0 && data.page2.every(t => t.pointage);
         formFields.innerHTML = `
           <input type="text" id="cheque" placeholder="Chèque (facultatif)">
           <input type="text" id="ordre" placeholder="Nom de la charge (ex: Loyer...)" required>
@@ -144,7 +147,10 @@
           <th>Chèque</th>
           <th>Nom de la Charge</th>
           <th class="amount">Montant Mensuel</th>
-          <th class="center">Pointé</th>
+          <th class="center">
+            Pointé tout 
+            <input type="checkbox" id="toggle-all-charges" ${allChecked ? 'checked' : ''} onchange="toggleAllCharges(this.checked)" title="Tout cocher / Tout décocher">
+          </th>
           <th class="center">Action</th>
         `;
       }
@@ -176,21 +182,27 @@
       const page = pageSource || currentPage;
       data[page] = data[page].map(t => t.id === id ? { ...t, pointage: !t.pointage } : t);
       save();
+      updateFormAndHead();
+      render();
+    }
+
+    function toggleAllCharges(status) {
+      data.page2 = data.page2.map(t => ({ ...t, pointage: status }));
+      save();
       render();
     }
 
     function deleteTransaction(id) {
       data[currentPage] = data[currentPage].filter(t => t.id !== id);
       save();
+      updateFormAndHead();
       render();
     }
 
-    // Calcul du total de TOUTES les charges
     function getTotalCharges() {
       return data.page2.reduce((total, t) => total + t.retrait, 0);
     }
 
-    // Calcul du total des charges uniquement COCHÉES/POINTÉES dans la feuille 2
     function getTotalChargesPointees() {
       return data.page2.filter(t => t.pointage).reduce((total, t) => total + t.retrait, 0);
     }
@@ -202,7 +214,6 @@
       const chargesPointees = getTotalChargesPointees();
 
       if (currentPage === 'page1') {
-        // Solde initial
         tableBody.innerHTML += `
           <tr>
             <td style="color: var(--text-muted)">-</td>
@@ -216,16 +227,15 @@
           </tr>
         `;
 
-        // Ligne unique regroupant les charges pointées
+        // Ligne des charges réellement prélevées (pointées)
         if (totalCharges > 0) {
-          // On déduit uniquement le montant des charges qui ont été cochées en feuille 2
           currentSolde -= chargesPointees;
 
           tableBody.innerHTML += `
             <tr class="row-charges-total">
               <td style="color: var(--text-muted)">—</td>
               <td style="color: var(--text-muted)">—</td>
-              <td><strong style="color: #b45309;">Total Charges Prélevées</strong></td>
+              <td><strong style="color: #b45309;">Charges Prélevées (pointées)</strong></td>
               <td class="amount"><span class="amount-minus">-${chargesPointees.toFixed(2)} €</span></td>
               <td class="amount">-</td>
               <td class="amount ${currentSolde < 0 ? 'negative' : ''}">${currentSolde.toFixed(2)} €</td>
@@ -235,7 +245,6 @@
           `;
         }
 
-        // Tri et affichage des opérations courantes de la Feuille 1
         const sortedOps = [...data.page1].sort((a, b) => new Date(a.date) - new Date(b.date));
 
         sortedOps.forEach(t => {
@@ -261,13 +270,31 @@
           tableBody.appendChild(row);
         });
 
+        // Calcul et affichage du solde final estimé si 100% des charges étaient déduites
+        const chargesRestantes = totalCharges - chargesPointees;
+        const soldeApresToutesCharges = currentSolde - chargesRestantes;
+
+        if (totalCharges > 0) {
+          tableBody.innerHTML += `
+            <tr class="row-charges-estime">
+              <td style="color: var(--text-muted)">—</td>
+              <td style="color: var(--text-muted)">—</td>
+              <td><strong style="color: #1d4ed8;">Solde Final (Toutes charges déduites)</strong></td>
+              <td class="amount"><span class="amount-minus">-${totalCharges.toFixed(2)} €</span></td>
+              <td class="amount">-</td>
+              <td class="amount ${soldeApresToutesCharges < 0 ? 'negative' : ''}"><strong>${soldeApresToutesCharges.toFixed(2)} €</strong></td>
+              <td class="center">-</td>
+              <td></td>
+            </tr>
+          `;
+        }
+
         summaryBar.innerHTML = `
-          <span>Charges prélevées : <strong style="color: #f59e0b;">${chargesPointees.toFixed(2)} € / ${totalCharges.toFixed(2)} €</strong></span>
-          <span>Solde disponible : <strong class="summary-val ${currentSolde < 0 ? 'negative' : ''}">${currentSolde.toFixed(2)} €</strong></span>
+          <span>Solde Réel Actuel : <strong class="summary-val ${currentSolde < 0 ? 'negative' : ''}">${currentSolde.toFixed(2)} €</strong></span>
+          <span>Solde Fin de Mois (toutes charges déduites) : <strong class="summary-val ${soldeApresToutesCharges < 0 ? 'negative' : ''}">${soldeApresToutesCharges.toFixed(2)} €</strong></span>
         `;
 
       } else {
-        // Feuille 2 : Détail des charges
         data.page2.forEach(t => {
           const row = document.createElement('tr');
           row.innerHTML = `
@@ -286,7 +313,7 @@
 
         summaryBar.innerHTML = `
           <span>Total des charges mensuelles : <strong>-${totalCharges.toFixed(2)} €</strong></span>
-          <span>Prélevées : <strong style="color: #6ee7b7;">-${chargesPointees.toFixed(2)} €</strong></span>
+          <span>Prélevées : <strong style="color: #38bdf8;">-${chargesPointees.toFixed(2)} €</strong></span>
         `;
       }
     }

@@ -87,7 +87,8 @@
 
     form input[type="text"],
     form input[type="number"],
-    form input[type="date"] {
+    form input[type="date"],
+    form select {
       background: var(--bg-color);
       border: 1px solid var(--card-border);
       color: var(--text-main);
@@ -98,17 +99,7 @@
       min-width: 140px;
     }
 
-    form input:focus { outline: none; border-color: var(--accent); }
-
-    .checkbox-field {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: var(--text-muted);
-      font-size: 0.9rem;
-      cursor: pointer;
-      user-select: none;
-    }
+    form input:focus, form select:focus { outline: none; border-color: var(--accent); }
 
     button[type="submit"] {
       background: var(--accent);
@@ -176,7 +167,7 @@
 
     .summary-bar {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 16px;
       margin-top: 24px;
     }
@@ -196,7 +187,7 @@
       margin-bottom: 6px;
     }
 
-    .summary-val { font-size: 1.5rem; font-weight: 700; color: var(--text-main); }
+    .summary-val { font-size: 1.4rem; font-weight: 700; color: var(--text-main); }
     .summary-val.reserve { color: var(--warning); }
     .summary-val.total { color: var(--accent); }
 
@@ -291,11 +282,17 @@
     const userDbRef = ref(db, 'comptes_data_users/' + currentUserId);
 
     let currentPage = 'page1';
-    let data = { page1: [], page2: [] };
+    let data = { page1: [], page2: [], reservesCategories: ['Vacances', 'Noël'] };
 
     onValue(userDbRef, (snapshot) => {
       const val = snapshot.val();
-      data = val ? { page1: val.page1 || [], page2: val.page2 || [] } : { page1: [], page2: [] };
+      data = val ? { 
+        page1: val.page1 || [], 
+        page2: val.page2 || [],
+        reservesCategories: val.reservesCategories || ['Vacances', 'Noël']
+      } : { page1: [], page2: [], reservesCategories: ['Vacances', 'Noël'] };
+      
+      updateFormAndHead();
       render();
     });
 
@@ -320,16 +317,38 @@
 
       if (currentPage === 'page1') {
         const today = new Date().toISOString().split('T')[0];
+        const optionsReserves = data.reservesCategories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+        
         formFields.innerHTML = `
           <input type="date" id="date" value="${today}" required>
           <input type="text" id="cheque" placeholder="Chèque (optionnel)">
           <input type="text" id="ordre" placeholder="Libellé / Intitulé" required>
           <input type="number" step="0.01" id="retrait" placeholder="Retrait (€)">
           <input type="number" step="0.01" id="versement" placeholder="Versement (€)">
-          <label class="checkbox-field">
-            <input type="checkbox" id="is-reserve"> Réserve ?
-          </label>
+          <select id="reserve-category">
+            <option value="none">Compte Courant</option>
+            ${optionsReserves}
+            <option value="__new__">+ Créer une nouvelle réserve...</option>
+          </select>
         `;
+
+        const selectReserve = document.getElementById('reserve-category');
+        selectReserve.addEventListener('change', (e) => {
+          if (e.target.value === '__new__') {
+            const name = prompt('Nom de la nouvelle réserve (ex: Travaux, Voiture...) :');
+            if (name && name.trim() !== '') {
+              const cleanName = name.trim();
+              if (!data.reservesCategories.includes(cleanName)) {
+                data.reservesCategories.push(cleanName);
+                save();
+              }
+              selectReserve.value = cleanName;
+            } else {
+              selectReserve.value = 'none';
+            }
+          }
+        });
+
         tableHead.innerHTML = `
           <th>Date</th>
           <th>Chèque</th>
@@ -371,19 +390,26 @@
 
     document.getElementById('transaction-form').addEventListener('submit', (e) => {
       e.preventDefault();
-      const isReserveEl = document.getElementById('is-reserve');
+      
       const newEntry = {
         id: Date.now(),
         cheque: document.getElementById('cheque').value,
         ordre: document.getElementById('ordre').value,
         retrait: parseFloat(document.getElementById('retrait').value) || 0,
         versement: parseFloat(document.getElementById('versement').value) || 0,
-        pointage: false,
-        isReserve: isReserveEl ? isReserveEl.checked : false
+        pointage: false
       };
 
       if (currentPage === 'page1') {
         newEntry.date = document.getElementById('date').value;
+        const reserveCat = document.getElementById('reserve-category').value;
+        
+        if (reserveCat !== 'none' && reserveCat !== '__new__') {
+          newEntry.isReserve = true;
+          newEntry.reserveCategory = reserveCat;
+        } else {
+          newEntry.isReserve = false;
+        }
       }
 
       data[currentPage].push(newEntry);
@@ -410,7 +436,11 @@
       tableBody.innerHTML = '';
       
       let soldeCompte = 0;
-      let soldeReserve = 0;
+      let totalReserves = 0;
+      const soldesParReserve = {};
+      
+      data.reservesCategories.forEach(cat => soldesParReserve[cat] = 0);
+
       const netChargesPointees = getNetChargesPointees();
 
       if (currentPage === 'page1') {
@@ -446,22 +476,28 @@
         const sortedOps = [...data.page1].sort((a, b) => new Date(a.date) - new Date(b.date));
 
         sortedOps.forEach(t => {
+          const delta = t.versement - t.retrait;
+          const isReserve = t.isReserve || Boolean(t.reserveCategory);
+          const category = t.reserveCategory || 'Réserve';
+
           if (t.pointage) {
-            if (t.isReserve) {
-              soldeReserve = soldeReserve - t.retrait + t.versement;
+            if (isReserve) {
+              totalReserves += delta;
+              if (!soldesParReserve[category]) soldesParReserve[category] = 0;
+              soldesParReserve[category] += delta;
             } else {
-              soldeCompte = soldeCompte - t.retrait + t.versement;
+              soldeCompte += delta;
             }
           }
 
-          const currentTotal = soldeCompte + soldeReserve;
+          const currentTotal = soldeCompte + totalReserves;
           const row = document.createElement('tr');
-          if (t.isReserve) row.classList.add('row-reserve');
+          if (isReserve) row.classList.add('row-reserve');
 
           row.innerHTML = `
             <td style="color: var(--text-muted)">${formatDate(t.date)}</td>
             <td style="color: var(--text-muted)">${t.cheque || '-'}</td>
-            <td>${t.isReserve ? '<span class="tag-reserve">Réserve</span>' : ''} <strong>${t.ordre}</strong></td>
+            <td>${isReserve ? `<span class="tag-reserve">${category}</span>` : ''} <strong>${t.ordre}</strong></td>
             <td class="amount">${t.retrait > 0 ? '<span class="amount-minus">-' + t.retrait.toFixed(2) + ' €</span>' : ''}</td>
             <td class="amount">${t.versement > 0 ? '<span class="amount-plus">+' + t.versement.toFixed(2) + ' €</span>' : ''}</td>
             <td class="amount ${currentTotal < 0 ? 'negative' : ''}">${currentTotal.toFixed(2)} €</td>
@@ -475,18 +511,30 @@
           tableBody.appendChild(row);
         });
 
-        const soldeTotalGlobal = soldeCompte + soldeReserve;
+        const soldeTotalGlobal = soldeCompte + totalReserves;
+
+        let reservesCardsHtml = '';
+        Object.entries(soldesParReserve).forEach(([cat, solde]) => {
+          reservesCardsHtml += `
+            <div class="summary-card">
+              <div class="summary-title">Réserve : ${cat}</div>
+              <div class="summary-val reserve">${solde.toFixed(2)} €</div>
+            </div>
+          `;
+        });
+
         summaryBar.innerHTML = `
           <div class="summary-card">
             <div class="summary-title">Solde Compte (Pointé)</div>
             <div class="summary-val ${soldeCompte < 0 ? 'negative' : ''}">${soldeCompte.toFixed(2)} €</div>
           </div>
+          ${reservesCardsHtml}
           <div class="summary-card">
-            <div class="summary-title">Solde Réserves Seules</div>
-            <div class="summary-val reserve">${soldeReserve.toFixed(2)} €</div>
+            <div class="summary-title">Total Réserves Cumulées</div>
+            <div class="summary-val reserve">${totalReserves.toFixed(2)} €</div>
           </div>
           <div class="summary-card">
-            <div class="summary-title">Solde Total (Compte + Réserves)</div>
+            <div class="summary-title">Solde Global (Compte + Réserves)</div>
             <div class="summary-val total">${soldeTotalGlobal.toFixed(2)} €</div>
           </div>
         `;

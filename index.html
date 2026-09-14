@@ -431,12 +431,6 @@
       if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
     });
 
-    function getNetChargesPointeesCompteCourant() {
-      return data.page2
-        .filter(t => t.pointage && (!t.isReserve && !t.reserveCategory))
-        .reduce((total, t) => total + (t.versement - t.retrait), 0);
-    }
-
     function formatDate(dateStr) {
       if (!dateStr) return '-';
       const parts = dateStr.split('-');
@@ -454,16 +448,27 @@
       
       data.reservesCategories.forEach(cat => soldesParReserve[cat] = 0);
 
-      // Cumul des charges fixes pointees attribuees a des reserves
-      data.page2.filter(t => t.pointage && (t.isReserve || t.reserveCategory)).forEach(t => {
-        const delta = t.versement - t.retrait;
-        const category = t.reserveCategory || 'Réserve';
-        totalReserves += delta;
-        if (!soldesParReserve[category]) soldesParReserve[category] = 0;
-        soldesParReserve[category] += delta;
-      });
+      // Calcul des impacts issus des Charges Fixes (Page 2) pointées
+      let chargesFixesImpactCompte = 0;
 
-      const netChargesPointeesCompte = getNetChargesPointeesCompteCourant();
+      data.page2.filter(t => t.pointage).forEach(t => {
+        const delta = t.versement - t.retrait;
+        const isReserve = t.isReserve || Boolean(t.reserveCategory);
+        const category = t.reserveCategory || 'Réserve';
+
+        if (isReserve) {
+          // L'argent va dans la réserve
+          totalReserves += delta;
+          if (!soldesParReserve[category]) soldesParReserve[category] = 0;
+          soldesParReserve[category] += delta;
+          
+          // Et est DÉBITÉ du compte courant
+          chargesFixesImpactCompte -= delta;
+        } else {
+          // Impact direct sur le compte courant
+          chargesFixesImpactCompte += delta;
+        }
+      });
 
       if (currentPage === 'page1') {
         tableBody.innerHTML += `
@@ -480,14 +485,14 @@
         `;
 
         if (data.page2.length > 0) {
-          soldeCompte += netChargesPointeesCompte;
+          soldeCompte += chargesFixesImpactCompte;
           tableBody.innerHTML += `
             <tr class="row-charges-total">
               <td style="color: var(--text-muted)">—</td>
               <td style="color: var(--text-muted)">—</td>
-              <td><strong style="color: #f59e0b;">Charges Fixes Compte Courant Pointées (Feuille 2)</strong></td>
-              <td class="amount">${netChargesPointeesCompte < 0 ? '<span class="amount-minus">' + netChargesPointeesCompte.toFixed(2) + ' €</span>' : '-'}</td>
-              <td class="amount">${netChargesPointeesCompte > 0 ? '<span class="amount-plus">+' + netChargesPointeesCompte.toFixed(2) + ' €</span>' : '-'}</td>
+              <td><strong style="color: #f59e0b;">Charges Fixes Pointées (Feuille 2)</strong></td>
+              <td class="amount">${chargesFixesImpactCompte < 0 ? '<span class="amount-minus">' + chargesFixesImpactCompte.toFixed(2) + ' €</span>' : '-'}</td>
+              <td class="amount">${chargesFixesImpactCompte > 0 ? '<span class="amount-plus">+' + chargesFixesImpactCompte.toFixed(2) + ' €</span>' : '-'}</td>
               <td class="amount ${soldeCompte < 0 ? 'negative' : ''}">${soldeCompte.toFixed(2)} €</td>
               <td class="center">-</td>
               <td></td>
@@ -504,9 +509,12 @@
 
           if (t.pointage) {
             if (isReserve) {
+              // Ajout à la réserve
               totalReserves += delta;
               if (!soldesParReserve[category]) soldesParReserve[category] = 0;
               soldesParReserve[category] += delta;
+              // Retrait du compte courant
+              soldeCompte -= delta;
             } else {
               soldeCompte += delta;
             }
@@ -547,7 +555,7 @@
 
         summaryBar.innerHTML = `
           <div class="summary-card">
-            <div class="summary-title">Solde Compte (Pointé)</div>
+            <div class="summary-title">Solde Compte Courant</div>
             <div class="summary-val ${soldeCompte < 0 ? 'negative' : ''}">${soldeCompte.toFixed(2)} €</div>
           </div>
           ${reservesCardsHtml}

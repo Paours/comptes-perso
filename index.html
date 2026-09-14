@@ -311,13 +311,34 @@
     document.getElementById('btn-tab1').addEventListener('click', () => switchPage('page1'));
     document.getElementById('btn-tab2').addEventListener('click', () => switchPage('page2'));
 
+    function attachReserveSelectHandler() {
+      const selectReserve = document.getElementById('reserve-category');
+      if (!selectReserve) return;
+
+      selectReserve.addEventListener('change', (e) => {
+        if (e.target.value === '__new__') {
+          const name = prompt('Nom de la nouvelle réserve (ex: Travaux, Voiture...) :');
+          if (name && name.trim() !== '') {
+            const cleanName = name.trim();
+            if (!data.reservesCategories.includes(cleanName)) {
+              data.reservesCategories.push(cleanName);
+              save();
+            }
+            selectReserve.value = cleanName;
+          } else {
+            selectReserve.value = 'none';
+          }
+        }
+      });
+    }
+
     function updateFormAndHead() {
       const formFields = document.getElementById('form-fields');
       const tableHead = document.getElementById('table-head');
+      const optionsReserves = data.reservesCategories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
 
       if (currentPage === 'page1') {
         const today = new Date().toISOString().split('T')[0];
-        const optionsReserves = data.reservesCategories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
         
         formFields.innerHTML = `
           <input type="date" id="date" value="${today}" required>
@@ -332,22 +353,7 @@
           </select>
         `;
 
-        const selectReserve = document.getElementById('reserve-category');
-        selectReserve.addEventListener('change', (e) => {
-          if (e.target.value === '__new__') {
-            const name = prompt('Nom de la nouvelle réserve (ex: Travaux, Voiture...) :');
-            if (name && name.trim() !== '') {
-              const cleanName = name.trim();
-              if (!data.reservesCategories.includes(cleanName)) {
-                data.reservesCategories.push(cleanName);
-                save();
-              }
-              selectReserve.value = cleanName;
-            } else {
-              selectReserve.value = 'none';
-            }
-          }
-        });
+        attachReserveSelectHandler();
 
         tableHead.innerHTML = `
           <th>Date</th>
@@ -366,7 +372,15 @@
           <input type="text" id="ordre" placeholder="Nom de l'opération" required>
           <input type="number" step="0.01" id="retrait" placeholder="Charge / Débit (€)">
           <input type="number" step="0.01" id="versement" placeholder="Revenu / Crédit (€)">
+          <select id="reserve-category">
+            <option value="none">Compte Courant</option>
+            ${optionsReserves}
+            <option value="__new__">+ Créer une nouvelle réserve...</option>
+          </select>
         `;
+
+        attachReserveSelectHandler();
+
         tableHead.innerHTML = `
           <th>Chèque</th>
           <th>Nom / Libellé</th>
@@ -391,25 +405,22 @@
     document.getElementById('transaction-form').addEventListener('submit', (e) => {
       e.preventDefault();
       
+      const reserveCat = document.getElementById('reserve-category').value;
+      const isReserve = reserveCat !== 'none' && reserveCat !== '__new__';
+
       const newEntry = {
         id: Date.now(),
         cheque: document.getElementById('cheque').value,
         ordre: document.getElementById('ordre').value,
         retrait: parseFloat(document.getElementById('retrait').value) || 0,
         versement: parseFloat(document.getElementById('versement').value) || 0,
-        pointage: false
+        pointage: false,
+        isReserve: isReserve,
+        reserveCategory: isReserve ? reserveCat : null
       };
 
       if (currentPage === 'page1') {
         newEntry.date = document.getElementById('date').value;
-        const reserveCat = document.getElementById('reserve-category').value;
-        
-        if (reserveCat !== 'none' && reserveCat !== '__new__') {
-          newEntry.isReserve = true;
-          newEntry.reserveCategory = reserveCat;
-        } else {
-          newEntry.isReserve = false;
-        }
       }
 
       data[currentPage].push(newEntry);
@@ -420,8 +431,10 @@
       if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
     });
 
-    function getNetChargesPointees() {
-      return data.page2.filter(t => t.pointage).reduce((total, t) => total + (t.versement - t.retrait), 0);
+    function getNetChargesPointeesCompteCourant() {
+      return data.page2
+        .filter(t => t.pointage && (!t.isReserve && !t.reserveCategory))
+        .reduce((total, t) => total + (t.versement - t.retrait), 0);
     }
 
     function formatDate(dateStr) {
@@ -441,7 +454,16 @@
       
       data.reservesCategories.forEach(cat => soldesParReserve[cat] = 0);
 
-      const netChargesPointees = getNetChargesPointees();
+      // Cumul des charges fixes pointees attribuees a des reserves
+      data.page2.filter(t => t.pointage && (t.isReserve || t.reserveCategory)).forEach(t => {
+        const delta = t.versement - t.retrait;
+        const category = t.reserveCategory || 'Réserve';
+        totalReserves += delta;
+        if (!soldesParReserve[category]) soldesParReserve[category] = 0;
+        soldesParReserve[category] += delta;
+      });
+
+      const netChargesPointeesCompte = getNetChargesPointeesCompteCourant();
 
       if (currentPage === 'page1') {
         tableBody.innerHTML += `
@@ -458,14 +480,14 @@
         `;
 
         if (data.page2.length > 0) {
-          soldeCompte += netChargesPointees;
+          soldeCompte += netChargesPointeesCompte;
           tableBody.innerHTML += `
             <tr class="row-charges-total">
               <td style="color: var(--text-muted)">—</td>
               <td style="color: var(--text-muted)">—</td>
-              <td><strong style="color: #f59e0b;">Éléments Mensuels Pointés (Feuille 2)</strong></td>
-              <td class="amount">${netChargesPointees < 0 ? '<span class="amount-minus">' + netChargesPointees.toFixed(2) + ' €</span>' : '-'}</td>
-              <td class="amount">${netChargesPointees > 0 ? '<span class="amount-plus">+' + netChargesPointees.toFixed(2) + ' €</span>' : '-'}</td>
+              <td><strong style="color: #f59e0b;">Charges Fixes Compte Courant Pointées (Feuille 2)</strong></td>
+              <td class="amount">${netChargesPointeesCompte < 0 ? '<span class="amount-minus">' + netChargesPointeesCompte.toFixed(2) + ' €</span>' : '-'}</td>
+              <td class="amount">${netChargesPointeesCompte > 0 ? '<span class="amount-plus">+' + netChargesPointeesCompte.toFixed(2) + ' €</span>' : '-'}</td>
               <td class="amount ${soldeCompte < 0 ? 'negative' : ''}">${soldeCompte.toFixed(2)} €</td>
               <td class="center">-</td>
               <td></td>
@@ -541,10 +563,14 @@
 
       } else {
         data.page2.forEach(t => {
+          const isReserve = t.isReserve || Boolean(t.reserveCategory);
+          const category = t.reserveCategory || 'Réserve';
           const row = document.createElement('tr');
+          if (isReserve) row.classList.add('row-reserve');
+
           row.innerHTML = `
             <td style="color: var(--text-muted)">${t.cheque || '-'}</td>
-            <td><strong>${t.ordre}</strong></td>
+            <td>${isReserve ? `<span class="tag-reserve">${category}</span>` : ''} <strong>${t.ordre}</strong></td>
             <td class="amount">${t.retrait > 0 ? '<span class="amount-minus">-' + t.retrait.toFixed(2) + ' €</span>' : '-'}</td>
             <td class="amount">${t.versement > 0 ? '<span class="amount-plus">+' + t.versement.toFixed(2) + ' €</span>' : '-'}</td>
             <td class="center">

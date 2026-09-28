@@ -87,6 +87,7 @@
     }
 
     .tab-btn:hover { color: var(--text-main); }
+
     .tab-btn.active {
       background: var(--accent);
       color: white;
@@ -123,7 +124,12 @@
       margin-bottom: 24px;
     }
 
-    form { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    form {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
 
     form input[type="text"],
     form input[type="number"],
@@ -139,7 +145,11 @@
       min-width: 140px;
     }
 
-    form input:focus, form select:focus { outline: none; border-color: var(--accent); }
+    form input:focus,
+    form select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
 
     button[type="submit"] {
       background: var(--accent);
@@ -151,7 +161,9 @@
       cursor: pointer;
     }
 
-    button[type="submit"]:hover { background: var(--accent-hover); }
+    button[type="submit"]:hover {
+      background: var(--accent-hover);
+    }
 
     .btn-reset-charges {
       background: rgba(245, 158, 11, 0.15);
@@ -177,9 +189,16 @@
       border-radius: 12px;
     }
 
-    table { width: 100%; border-collapse: collapse; text-align: left; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
 
-    th, td { padding: 14px 16px; border-bottom: 1px solid var(--card-border); }
+    th, td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--card-border);
+    }
 
     th {
       background: rgba(0, 0, 0, 0.2);
@@ -191,7 +210,11 @@
 
     tr:last-child td { border-bottom: none; }
 
-    .amount { text-align: right; font-weight: 600; }
+    .amount {
+      text-align: right;
+      font-weight: 600;
+    }
+
     .amount-minus { color: var(--danger); }
     .amount-plus { color: var(--success); }
     .center { text-align: center; }
@@ -207,10 +230,18 @@
       border-radius: 4px;
     }
 
-    .btn-del:hover { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+    .btn-del:hover {
+      color: var(--danger);
+      background: rgba(239, 68, 68, 0.1);
+    }
 
-    .row-reserve { background-color: rgba(245, 158, 11, 0.05); }
-    .row-charges-total { background-color: rgba(59, 130, 246, 0.05); }
+    .row-reserve {
+      background-color: rgba(245, 158, 11, 0.05);
+    }
+
+    .row-charges-total {
+      background-color: rgba(59, 130, 246, 0.05);
+    }
 
     .tag-reserve {
       background: rgba(245, 158, 11, 0.2);
@@ -244,7 +275,12 @@
       margin-bottom: 6px;
     }
 
-    .summary-val { font-size: 1.4rem; font-weight: 700; color: var(--text-main); }
+    .summary-val {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
     .summary-val.reserve { color: var(--warning); }
     .summary-val.total { color: var(--accent); }
 
@@ -259,11 +295,14 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
+
 <body>
 
   <div class="container">
+
     <header>
       <h1>Mes Comptes</h1>
+
       <div class="badge-container">
         <div id="user-badge">Chargement...</div>
         <div id="status-badge">🟡 Connexion en cours...</div>
@@ -271,6 +310,7 @@
     </header>
 
     <div class="tabs-bar">
+
       <div class="tabs">
         <button id="btn-tab1" class="tab-btn active">Opérations</button>
         <button id="btn-tab2" class="tab-btn">Charges Fixes</button>
@@ -282,268 +322,993 @@
       </div>
 
       <div class="filter-container" id="reset-charges-wrapper" style="display: none;">
-        <button id="btn-reset-charges" class="btn-reset-charges">↺ Réinitialiser l'état du mois</button>
+        <button id="btn-reset-charges" class="btn-reset-charges">
+          ↺ Réinitialiser l'état du mois
+        </button>
       </div>
+
     </div>
 
     <div class="card">
+
       <form id="transaction-form">
-        <div id="form-fields" style="display: flex; gap: 12px; flex-wrap: wrap; flex: 1;"></div>
+
+        <div
+          id="form-fields"
+          style="display:flex;gap:12px;flex-wrap:wrap;flex:1;">
+        </div>
+
         <button type="submit">Ajouter</button>
+
       </form>
+
     </div>
 
     <div class="table-container">
+
       <table>
+
         <thead>
           <tr id="table-head"></tr>
         </thead>
+
         <tbody id="table-body"></tbody>
+
       </table>
+
     </div>
 
     <div id="summary-bar" class="summary-bar"></div>
+
   </div>
 
   <script>
-    function getUserKey() {
-      const urlParams = new URLSearchParams(window.location.search);
-      let userParam = urlParams.get('user');
-      let storedUser = localStorage.getItem('mes_comptes_user_key');
 
-      if (userParam && userParam !== 'new') {
-        localStorage.setItem('mes_comptes_user_key', userParam);
+    /* =========================================================
+       UTILISATEUR
+    ========================================================= */
+
+    function getUserKey() {
+
+      const urlParams =
+        new URLSearchParams(window.location.search);
+
+      let userParam =
+        urlParams.get('user');
+
+      let storedUser =
+        localStorage.getItem(
+          'mes_comptes_user_key'
+        );
+
+      if (
+        userParam &&
+        userParam !== 'new'
+      ) {
+
+        localStorage.setItem(
+          'mes_comptes_user_key',
+          userParam
+        );
+
         return userParam;
       }
 
       if (storedUser) {
+
         if (!urlParams.get('user')) {
-          const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?user=' + storedUser;
-          window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+
+          const cleanUrl =
+            window.location.protocol +
+            "//" +
+            window.location.host +
+            window.location.pathname +
+            '?user=' +
+            storedUser;
+
+          window.history.replaceState(
+            { path: cleanUrl },
+            '',
+            cleanUrl
+          );
+
         }
+
         return storedUser;
       }
 
-      const newKey = 'usr_' + Math.random().toString(36).substr(2, 9);
-      localStorage.setItem('mes_comptes_user_key', newKey);
-      const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?user=' + newKey;
-      window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+      const newKey =
+        'usr_' +
+        Math.random()
+          .toString(36)
+          .substr(2, 9);
+
+      localStorage.setItem(
+        'mes_comptes_user_key',
+        newKey
+      );
+
+      const cleanUrl =
+        window.location.protocol +
+        "//" +
+        window.location.host +
+        window.location.pathname +
+        '?user=' +
+        newKey;
+
+      window.history.replaceState(
+        { path: cleanUrl },
+        '',
+        cleanUrl
+      );
+
       return newKey;
     }
 
-    const currentUserId = getUserKey();
 
-    document.getElementById('user-badge').innerHTML = `Clé : <strong style="color:var(--text-main); margin-left:4px;">${currentUserId}</strong>`;
+    const currentUserId =
+      getUserKey();
+
+
+    document.getElementById(
+      'user-badge'
+    ).innerHTML =
+      `Clé :
+       <strong style="color:var(--text-main);margin-left:4px;">
+         ${currentUserId}
+       </strong>`;
+
+
+    /* =========================================================
+       FIREBASE
+    ========================================================= */
 
     const firebaseConfig = {
-      apiKey: "AIzaSyCHh9JL1E3Trgxv-XGdoCyR8Ay8SIWepBo",
-      authDomain: "mes-comptes-7a597.firebaseapp.com",
-      databaseURL: "https://mes-comptes-7a597-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "mes-comptes-7a597",
-      storageBucket: "mes-comptes-7a597.firebasestorage.app",
-      messagingSenderId: "364718028394",
-      appId: "1:364718028394:web:0ab4cc30259b4fe477fc13"
+
+      apiKey:
+        "AIzaSyCHh9JL1E3Trgxv-XGdoCyR8Ay8SIWepBo",
+
+      authDomain:
+        "mes-comptes-7a597.firebaseapp.com",
+
+      databaseURL:
+        "https://mes-comptes-7a597-default-rtdb.europe-west1.firebasedatabase.app",
+
+      projectId:
+        "mes-comptes-7a597",
+
+      storageBucket:
+        "mes-comptes-7a597.firebasestorage.app",
+
+      messagingSenderId:
+        "364718028394",
+
+      appId:
+        "1:364718028394:web:0ab4cc30259b4fe477fc13"
     };
+
 
     if (!firebase.apps.length) {
       firebase.initializeApp(firebaseConfig);
     }
-    
-    const db = firebase.database();
-    const userDbRef = db.ref('comptes_data_users/' + currentUserId);
 
-    let currentPage = 'page1';
-    let data = { page1: [], page2: [], monthlyChargesState: {}, reservesCategories: ['Vacances', 'Noël'] };
 
-    const now = new Date();
-    const currentYYYYMM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    let selectedMonth = currentYYYYMM;
+    const db =
+      firebase.database();
 
-    const localBackup = localStorage.getItem('backup_data_' + currentUserId);
+
+    const userDbRef =
+      db.ref(
+        'comptes_data_users/' +
+        currentUserId
+      );
+
+
+    /* =========================================================
+       DONNEES
+    ========================================================= */
+
+    let currentPage =
+      'page1';
+
+
+    let data = {
+
+      page1: [],
+
+      page2: [],
+
+      monthlyChargesState: {},
+
+      reservesCategories: [
+        'Vacances',
+        'Noël'
+      ]
+
+    };
+
+
+    const now =
+      new Date();
+
+
+    const currentYYYYMM =
+      `${now.getFullYear()}-${String(
+        now.getMonth() + 1
+      ).padStart(2, '0')}`;
+
+
+    let selectedMonth =
+      currentYYYYMM;
+
+
+    /* =========================================================
+       BACKUP LOCAL
+    ========================================================= */
+
+    const localBackup =
+      localStorage.getItem(
+        'backup_data_' +
+        currentUserId
+      );
+
+
     if (localBackup) {
+
       try {
-        data = JSON.parse(localBackup);
-        if (!data.monthlyChargesState) data.monthlyChargesState = {};
+
+        data =
+          JSON.parse(localBackup);
+
+        if (!data.monthlyChargesState) {
+          data.monthlyChargesState = {};
+        }
+
         updateMonthFilterOptions();
         updateFormAndHead();
         render();
-      } catch(e) {}
+
+      } catch (e) {
+
+        console.error(
+          'Erreur lecture backup local',
+          e
+        );
+
+      }
+
     }
 
-    db.ref('.info/connected').on('value', (snap) => {
-      const statusEl = document.getElementById('status-badge');
-      if (snap.val() === true) {
-        statusEl.innerHTML = '🟢 Connecté';
-        statusEl.style.color = 'var(--success)';
-      } else {
-        statusEl.innerHTML = '🔴 Hors ligne (Mode local)';
-        statusEl.style.color = 'var(--danger)';
-      }
-    });
 
-    userDbRef.on('value', (snapshot) => {
-      const val = snapshot.val();
-      if (val) {
-        data = {
-          page1: Array.isArray(val.page1) ? val.page1 : [],
-          page2: Array.isArray(val.page2) ? val.page2 : [],
-          monthlyChargesState: val.monthlyChargesState || {},
-          reservesCategories: Array.isArray(val.reservesCategories) ? val.reservesCategories : ['Vacances', 'Noël']
-        };
-        localStorage.setItem('backup_data_' + currentUserId, JSON.stringify(data));
-      }
-      updateMonthFilterOptions();
-      updateFormAndHead();
-      render();
-    });
+    /* =========================================================
+       STATUT FIREBASE
+    ========================================================= */
 
-    function getChargeState(chargeId, monthKey) {
-      const activeMonth = monthKey === 'ALL' ? currentYYYYMM : monthKey;
-      if (data.monthlyChargesState && data.monthlyChargesState[activeMonth] && data.monthlyChargesState[activeMonth][chargeId]) {
-        return data.monthlyChargesState[activeMonth][chargeId];
+    db.ref('.info/connected')
+      .on(
+        'value',
+        (snap) => {
+
+          const statusEl =
+            document.getElementById(
+              'status-badge'
+            );
+
+          if (snap.val() === true) {
+
+            statusEl.innerHTML =
+              '🟢 Connecté';
+
+            statusEl.style.color =
+              'var(--success)';
+
+          } else {
+
+            statusEl.innerHTML =
+              '🔴 Hors ligne (Mode local)';
+
+            statusEl.style.color =
+              'var(--danger)';
+
+          }
+
+        }
+      );
+
+
+    /* =========================================================
+       CHARGEMENT FIREBASE
+    ========================================================= */
+
+    userDbRef.on(
+      'value',
+      (snapshot) => {
+
+        const val =
+          snapshot.val();
+
+        if (val) {
+
+          data = {
+
+            page1:
+              Array.isArray(val.page1)
+                ? val.page1
+                : [],
+
+            page2:
+              Array.isArray(val.page2)
+                ? val.page2
+                : [],
+
+            monthlyChargesState:
+              val.monthlyChargesState || {},
+
+            reservesCategories:
+              Array.isArray(
+                val.reservesCategories
+              )
+                ? val.reservesCategories
+                : ['Vacances', 'Noël']
+
+          };
+
+
+          localStorage.setItem(
+            'backup_data_' +
+            currentUserId,
+            JSON.stringify(data)
+          );
+
+        }
+
+
+        updateMonthFilterOptions();
+        updateFormAndHead();
+        render();
+
       }
-      const charge = (data.page2 || []).find(c => c.id === chargeId);
+    );
+
+
+    /* =========================================================
+       ETAT CHARGES FIXES
+    ========================================================= */
+
+    function getChargeState(
+      chargeId,
+      monthKey
+    ) {
+
+      const activeMonth =
+        monthKey === 'ALL'
+          ? currentYYYYMM
+          : monthKey;
+
+
+      if (
+        data.monthlyChargesState &&
+        data.monthlyChargesState[activeMonth] &&
+        data.monthlyChargesState[activeMonth][chargeId]
+      ) {
+
+        return data
+          .monthlyChargesState[activeMonth][chargeId];
+
+      }
+
+
+      const charge =
+        (data.page2 || []).find(
+          c => c.id === chargeId
+        );
+
+
       return {
-        pointage: charge ? Boolean(charge.pointage) : false,
-        traite: charge ? Boolean(charge.traite) : false
+
+        pointage:
+          charge
+            ? Boolean(charge.pointage)
+            : false,
+
+        traite:
+          charge
+            ? Boolean(charge.traite)
+            : false
+
       };
+
     }
 
-    function setChargeState(chargeId, monthKey, key, value) {
-      const activeMonth = monthKey === 'ALL' ? currentYYYYMM : monthKey;
-      if (!data.monthlyChargesState) data.monthlyChargesState = {};
-      if (!data.monthlyChargesState[activeMonth]) data.monthlyChargesState[activeMonth] = {};
-      
-      const current = getChargeState(chargeId, activeMonth);
-      current[key] = value;
-      data.monthlyChargesState[activeMonth][chargeId] = current;
+
+    function setChargeState(
+      chargeId,
+      monthKey,
+      key,
+      value
+    ) {
+
+      const activeMonth =
+        monthKey === 'ALL'
+          ? currentYYYYMM
+          : monthKey;
+
+
+      if (!data.monthlyChargesState) {
+        data.monthlyChargesState = {};
+      }
+
+
+      if (
+        !data.monthlyChargesState[activeMonth]
+      ) {
+
+        data.monthlyChargesState[activeMonth] = {};
+
+      }
+
+
+      const current =
+        getChargeState(
+          chargeId,
+          activeMonth
+        );
+
+
+      current[key] =
+        value;
+
+
+      data
+        .monthlyChargesState[activeMonth][chargeId]
+        = current;
+
     }
+
+
+    /* =========================================================
+       NETTOYAGE FIREBASE
+    ========================================================= */
 
     function cleanDataForFirebase(obj) {
-      return JSON.parse(JSON.stringify(obj, (key, value) => value === undefined ? null : value));
+
+      return JSON.parse(
+        JSON.stringify(
+          obj,
+          (key, value) =>
+            value === undefined
+              ? null
+              : value
+        )
+      );
+
     }
+
+
+    /* =========================================================
+       SAUVEGARDE
+    ========================================================= */
 
     function save() {
-      const cleanData = cleanDataForFirebase(data);
-      localStorage.setItem('backup_data_' + currentUserId, JSON.stringify(cleanData));
-      userDbRef.set(cleanData).catch(err => {
-        console.error("Erreur de sauvegarde Firebase : ", err);
-      });
+
+      const cleanData =
+        cleanDataForFirebase(data);
+
+
+      localStorage.setItem(
+        'backup_data_' +
+        currentUserId,
+        JSON.stringify(cleanData)
+      );
+
+
+      userDbRef
+        .set(cleanData)
+        .catch(
+          err => {
+
+            console.error(
+              "Erreur de sauvegarde Firebase : ",
+              err
+            );
+
+          }
+        );
+
+
       render();
+
     }
 
+
+    /* =========================================================
+       CHANGEMENT D'ONGLET
+    ========================================================= */
+
     function switchPage(page) {
-      currentPage = page;
-      document.getElementById('btn-tab1').classList.toggle('active', page === 'page1');
-      document.getElementById('btn-tab2').classList.toggle('active', page === 'page2');
-      
-      document.getElementById('reset-charges-wrapper').style.display = page === 'page2' ? 'flex' : 'none';
+
+      currentPage =
+        page;
+
+
+      document
+        .getElementById('btn-tab1')
+        .classList
+        .toggle(
+          'active',
+          page === 'page1'
+        );
+
+
+      document
+        .getElementById('btn-tab2')
+        .classList
+        .toggle(
+          'active',
+          page === 'page2'
+        );
+
+
+      document.getElementById(
+        'reset-charges-wrapper'
+      ).style.display =
+        page === 'page2'
+          ? 'flex'
+          : 'none';
+
 
       updateFormAndHead();
       render();
+
     }
 
-    document.getElementById('btn-tab1').addEventListener('click', () => switchPage('page1'));
-    document.getElementById('btn-tab2').addEventListener('click', () => switchPage('page2'));
 
-    document.getElementById('btn-reset-charges').addEventListener('click', () => {
-      const activeMonth = selectedMonth === 'ALL' ? currentYYYYMM : selectedMonth;
-      if (confirm(`Voulez-vous réinitialiser les cases de l'onglet Charges Fixes pour le mois sélectionné (${activeMonth}) ?`)) {
-        if (!data.monthlyChargesState) data.monthlyChargesState = {};
-        data.monthlyChargesState[activeMonth] = {};
-        (data.page2 || []).forEach(t => {
-          data.monthlyChargesState[activeMonth][t.id] = { pointage: true, traite: false };
-        });
-        save();
+    document
+      .getElementById('btn-tab1')
+      .addEventListener(
+        'click',
+        () => switchPage('page1')
+      );
+
+
+    document
+      .getElementById('btn-tab2')
+      .addEventListener(
+        'click',
+        () => switchPage('page2')
+      );
+
+
+    /* =========================================================
+       RESET CHARGES
+    ========================================================= */
+
+    document
+      .getElementById('btn-reset-charges')
+      .addEventListener(
+        'click',
+        () => {
+
+          const activeMonth =
+            selectedMonth === 'ALL'
+              ? currentYYYYMM
+              : selectedMonth;
+
+
+          if (
+            confirm(
+              `Voulez-vous réinitialiser les cases de l'onglet Charges Fixes pour le mois sélectionné (${activeMonth}) ?`
+            )
+          ) {
+
+            if (!data.monthlyChargesState) {
+              data.monthlyChargesState = {};
+            }
+
+
+            data.monthlyChargesState[activeMonth] = {};
+
+
+            (data.page2 || [])
+              .forEach(
+                t => {
+
+                  data
+                    .monthlyChargesState[activeMonth][t.id]
+                    = {
+                      pointage: true,
+                      traite: false
+                    };
+
+                }
+              );
+
+
+            save();
+
+          }
+
+        }
+      );
+
+
+    /* =========================================================
+       FILTRE MOIS
+    ========================================================= */
+
+    const monthFilterSelect =
+      document.getElementById(
+        'month-filter'
+      );
+
+
+    monthFilterSelect.addEventListener(
+      'change',
+      (e) => {
+
+        selectedMonth =
+          e.target.value;
+
+        render();
+
       }
-    });
+    );
 
-    const monthFilterSelect = document.getElementById('month-filter');
-    monthFilterSelect.addEventListener('change', (e) => {
-      selectedMonth = e.target.value;
-      render();
-    });
 
     function updateMonthFilterOptions() {
-      const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
-      const monthsSet = new Set();
-      
-      monthsSet.add(currentYYYYMM);
 
-      const [curY, curM] = currentYYYYMM.split('-').map(Number);
-      const nextDate = new Date(curY, curM, 1);
-      const nextYYYYMM = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}`;
-      monthsSet.add(nextYYYYMM);
+      const monthNames = [
+        "Janvier",
+        "Février",
+        "Mars",
+        "Avril",
+        "Mai",
+        "Juin",
+        "Juillet",
+        "Août",
+        "Septembre",
+        "Octobre",
+        "Novembre",
+        "Décembre"
+      ];
 
-      (data.page1 || []).forEach(t => {
-        if (t.date && t.date.length >= 7) {
-          monthsSet.add(t.date.substring(0, 7));
+
+      const monthsSet =
+        new Set();
+
+
+      monthsSet.add(
+        currentYYYYMM
+      );
+
+
+      const [
+        curY,
+        curM
+      ] =
+        currentYYYYMM
+          .split('-')
+          .map(Number);
+
+
+      const nextDate =
+        new Date(
+          curY,
+          curM,
+          1
+        );
+
+
+      const nextYYYYMM =
+        `${nextDate.getFullYear()}-${String(
+          nextDate.getMonth() + 1
+        ).padStart(2, '0')}`;
+
+
+      monthsSet.add(
+        nextYYYYMM
+      );
+
+
+      /* Mois des opérations */
+
+      (data.page1 || [])
+        .forEach(
+          t => {
+
+            if (
+              t.date &&
+              t.date.length >= 7
+            ) {
+
+              monthsSet.add(
+                t.date.substring(0, 7)
+              );
+
+            }
+
+          }
+        );
+
+
+      /* Mois des charges fixes */
+
+      Object.keys(
+        data.monthlyChargesState || {}
+      )
+      .forEach(
+        monthKey => {
+
+          if (
+            monthKey !== 'ALL'
+          ) {
+
+            monthsSet.add(
+              monthKey
+            );
+
+          }
+
         }
-      });
+      );
 
-      const sortedMonths = Array.from(monthsSet).sort().reverse();
 
-      let optionsHtml = '';
-      sortedMonths.forEach(mKey => {
-        const [year, month] = mKey.split('-');
-        const monthIndex = parseInt(month, 10) - 1;
-        const name = monthNames[monthIndex] || month;
-        let suffix = '';
-        if (mKey === currentYYYYMM) suffix = ' (En cours)';
-        else if (mKey === nextYYYYMM) suffix = ' (Mois prochain)';
-        
-        const label = `${name} ${year}${suffix}`;
-        optionsHtml += `<option value="${mKey}" ${selectedMonth === mKey ? 'selected' : ''}>${label}</option>`;
-      });
+      const sortedMonths =
+        Array.from(monthsSet)
+          .sort()
+          .reverse();
 
-      optionsHtml += `<option value="ALL" ${selectedMonth === 'ALL' ? 'selected' : ''}>-- Tous les mois --</option>`;
-      monthFilterSelect.innerHTML = optionsHtml;
+
+      let optionsHtml =
+        '';
+
+
+      sortedMonths.forEach(
+        mKey => {
+
+          const [
+            year,
+            month
+          ] =
+            mKey.split('-');
+
+
+          const monthIndex =
+            parseInt(
+              month,
+              10
+            ) - 1;
+
+
+          const name =
+            monthNames[monthIndex]
+            || month;
+
+
+          let suffix =
+            '';
+
+
+          if (
+            mKey === currentYYYYMM
+          ) {
+
+            suffix =
+              ' (En cours)';
+
+          } else if (
+            mKey === nextYYYYMM
+          ) {
+
+            suffix =
+              ' (Mois prochain)';
+
+          }
+
+
+          const label =
+            `${name} ${year}${suffix}`;
+
+
+          optionsHtml +=
+            `<option value="${mKey}"
+              ${selectedMonth === mKey ? 'selected' : ''}>
+              ${label}
+            </option>`;
+
+        }
+      );
+
+
+      optionsHtml +=
+        `<option value="ALL"
+          ${selectedMonth === 'ALL' ? 'selected' : ''}>
+          -- Tous les mois --
+        </option>`;
+
+
+      monthFilterSelect.innerHTML =
+        optionsHtml;
+
     }
+
+
+    /* =========================================================
+       RESERVES
+    ========================================================= */
 
     function attachReserveSelectHandler() {
-      const selectReserve = document.getElementById('reserve-category');
+
+      const selectReserve =
+        document.getElementById(
+          'reserve-category'
+        );
+
+
       if (!selectReserve) return;
 
-      selectReserve.addEventListener('change', (e) => {
-        if (e.target.value === '__new__') {
-          const name = prompt('Nom de la nouvelle réserve (ex: Travaux, Voiture...) :');
-          if (name && name.trim() !== '') {
-            const cleanName = name.trim();
-            if (!data.reservesCategories.includes(cleanName)) {
-              data.reservesCategories.push(cleanName);
-              save();
+
+      selectReserve.addEventListener(
+        'change',
+        (e) => {
+
+          if (
+            e.target.value === '__new__'
+          ) {
+
+            const name =
+              prompt(
+                'Nom de la nouvelle réserve (ex: Travaux, Voiture...) :'
+              );
+
+
+            if (
+              name &&
+              name.trim() !== ''
+            ) {
+
+              const cleanName =
+                name.trim();
+
+
+              if (
+                !data.reservesCategories.includes(
+                  cleanName
+                )
+              ) {
+
+                data.reservesCategories.push(
+                  cleanName
+                );
+
+                save();
+
+              }
+
+
+              selectReserve.value =
+                cleanName;
+
+            } else {
+
+              selectReserve.value =
+                'none';
+
             }
-            selectReserve.value = cleanName;
-          } else {
-            selectReserve.value = 'none';
+
           }
+
         }
-      });
+      );
+
     }
 
-    function updateFormAndHead() {
-      const formFields = document.getElementById('form-fields');
-      const tableHead = document.getElementById('table-head');
-      const categories = data.reservesCategories || ['Vacances', 'Noël'];
-      const optionsReserves = categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
 
-      if (currentPage === 'page1') {
-        const today = new Date().toISOString().split('T')[0];
+    /* =========================================================
+       FORMULAIRE + TABLEAU
+    ========================================================= */
+
+    function updateFormAndHead() {
+
+      const formFields =
+        document.getElementById(
+          'form-fields'
+        );
+
+
+      const tableHead =
+        document.getElementById(
+          'table-head'
+        );
+
+
+      const categories =
+        data.reservesCategories ||
+        [
+          'Vacances',
+          'Noël'
+        ];
+
+
+      const optionsReserves =
+        categories
+          .map(
+            cat =>
+              `<option value="${cat}">
+                ${cat}
+              </option>`
+          )
+          .join('');
+
+
+      if (
+        currentPage === 'page1'
+      ) {
+
+        const today =
+          new Date()
+            .toISOString()
+            .split('T')[0];
+
+
         formFields.innerHTML = `
-          <input type="date" id="date" value="${today}" required>
-          <input type="text" id="cheque" placeholder="Chèque (optionnel)">
-          <input type="text" id="ordre" placeholder="Libellé / Intitulé" required>
-          <input type="number" step="0.01" id="retrait" placeholder="Retrait (€)">
-          <input type="number" step="0.01" id="versement" placeholder="Versement (€)">
+
+          <input
+            type="date"
+            id="date"
+            value="${today}"
+            required
+          >
+
+          <input
+            type="text"
+            id="cheque"
+            placeholder="Chèque (optionnel)"
+          >
+
+          <input
+            type="text"
+            id="ordre"
+            placeholder="Libellé / Intitulé"
+            required
+          >
+
+          <input
+            type="number"
+            step="0.01"
+            id="retrait"
+            placeholder="Retrait (€)"
+          >
+
+          <input
+            type="number"
+            step="0.01"
+            id="versement"
+            placeholder="Versement (€)"
+          >
+
           <select id="reserve-category">
-            <option value="none">Compte Courant</option>
+
+            <option value="none">
+              Compte Courant
+            </option>
+
             ${optionsReserves}
-            <option value="__new__">+ Créer une nouvelle réserve...</option>
+
+            <option value="__new__">
+              + Créer une nouvelle réserve...
+            </option>
+
           </select>
+
         `;
+
+
         attachReserveSelectHandler();
 
+
         tableHead.innerHTML = `
+
           <th>Date</th>
           <th>Chèque</th>
           <th>Libellé</th>
@@ -552,381 +1317,1622 @@
           <th class="amount">Solde Compte</th>
           <th class="center">Pointé</th>
           <th class="center">Action</th>
+
         `;
+
       } else {
-        const activeMonth = selectedMonth === 'ALL' ? currentYYYYMM : selectedMonth;
-        const allChecked = data.page2.length > 0 && data.page2.every(t => getChargeState(t.id, activeMonth).pointage);
-        const allProcessed = data.page2.length > 0 && data.page2.every(t => getChargeState(t.id, activeMonth).traite);
+
+        const activeMonth =
+          selectedMonth === 'ALL'
+            ? currentYYYYMM
+            : selectedMonth;
+
+
+        const allChecked =
+          data.page2.length > 0 &&
+          data.page2.every(
+            t =>
+              getChargeState(
+                t.id,
+                activeMonth
+              ).pointage
+          );
+
+
+        const allProcessed =
+          data.page2.length > 0 &&
+          data.page2.every(
+            t =>
+              getChargeState(
+                t.id,
+                activeMonth
+              ).traite
+          );
+
 
         formFields.innerHTML = `
-          <input type="text" id="cheque" placeholder="Chèque (optionnel)">
-          <input type="text" id="ordre" placeholder="Nom de l'opération" required>
-          <input type="number" step="0.01" id="retrait" placeholder="Charge / Débit (€)">
-          <input type="number" step="0.01" id="versement" placeholder="Revenu / Crédit (€)">
+
+          <input
+            type="text"
+            id="cheque"
+            placeholder="Chèque (optionnel)"
+          >
+
+          <input
+            type="text"
+            id="ordre"
+            placeholder="Nom de l'opération"
+            required
+          >
+
+          <input
+            type="number"
+            step="0.01"
+            id="retrait"
+            placeholder="Charge / Débit (€)"
+          >
+
+          <input
+            type="number"
+            step="0.01"
+            id="versement"
+            placeholder="Revenu / Crédit (€)"
+          >
+
           <select id="reserve-category">
-            <option value="none">Compte Courant</option>
+
+            <option value="none">
+              Compte Courant
+            </option>
+
             ${optionsReserves}
-            <option value="__new__">+ Créer une nouvelle réserve...</option>
+
+            <option value="__new__">
+              + Créer une nouvelle réserve...
+            </option>
+
           </select>
+
         `;
+
+
         attachReserveSelectHandler();
 
+
         tableHead.innerHTML = `
+
           <th>Chèque</th>
+
           <th>Nom / Libellé</th>
-          <th class="amount">Charge (-)</th>
-          <th class="amount">Revenu (+)</th>
-          <th class="center">
-            Inclus <input type="checkbox" id="toggle-all-charges" ${allChecked ? 'checked' : ''}>
+
+          <th class="amount">
+            Charge (-)
           </th>
-          <th class="center">
-            Traité <input type="checkbox" id="toggle-all-traite" ${allProcessed ? 'checked' : ''}>
+
+          <th class="amount">
+            Revenu (+)
           </th>
-          <th class="center">Action</th>
+
+          <th class="center">
+            Inclus
+            <input
+              type="checkbox"
+              id="toggle-all-charges"
+              ${allChecked ? 'checked' : ''}
+            >
+          </th>
+
+          <th class="center">
+            Traité
+            <input
+              type="checkbox"
+              id="toggle-all-traite"
+              ${allProcessed ? 'checked' : ''}
+            >
+          </th>
+
+          <th class="center">
+            Action
+          </th>
+
         `;
 
-        const toggleAll = document.getElementById('toggle-all-charges');
+
+        const toggleAll =
+          document.getElementById(
+            'toggle-all-charges'
+          );
+
+
         if (toggleAll) {
-          toggleAll.addEventListener('change', (e) => {
-            data.page2.forEach(t => setChargeState(t.id, activeMonth, 'pointage', e.target.checked));
-            save();
-          });
+
+          toggleAll.addEventListener(
+            'change',
+            (e) => {
+
+              data.page2.forEach(
+                t => {
+
+                  setChargeState(
+                    t.id,
+                    activeMonth,
+                    'pointage',
+                    e.target.checked
+                  );
+
+                }
+              );
+
+              save();
+
+            }
+          );
+
         }
 
-        const toggleAllTraite = document.getElementById('toggle-all-traite');
+
+        const toggleAllTraite =
+          document.getElementById(
+            'toggle-all-traite'
+          );
+
+
         if (toggleAllTraite) {
-          toggleAllTraite.addEventListener('change', (e) => {
-            data.page2.forEach(t => setChargeState(t.id, activeMonth, 'traite', e.target.checked));
-            save();
-          });
+
+          toggleAllTraite.addEventListener(
+            'change',
+            (e) => {
+
+              data.page2.forEach(
+                t => {
+
+                  setChargeState(
+                    t.id,
+                    activeMonth,
+                    'traite',
+                    e.target.checked
+                  );
+
+                }
+              );
+
+              save();
+
+            }
+          );
+
         }
+
       }
+
     }
 
-    document.getElementById('transaction-form').addEventListener('submit', (e) => {
-      e.preventDefault();
-      
-      const reserveCat = document.getElementById('reserve-category').value;
-      const isReserve = reserveCat !== 'none' && reserveCat !== '__new__';
 
-      const newEntry = {
-        id: Date.now(),
-        cheque: document.getElementById('cheque').value || '',
-        ordre: document.getElementById('ordre').value || '',
-        retrait: parseFloat(document.getElementById('retrait').value) || 0,
-        versement: parseFloat(document.getElementById('versement').value) || 0,
-        pointage: currentPage === 'page2' ? true : false,
-        traite: false,
-        isReserve: isReserve,
-        reserveCategory: isReserve ? reserveCat : ''
-      };
+    /* =========================================================
+       AJOUT OPERATION
+    ========================================================= */
 
-      if (currentPage === 'page1') {
-        newEntry.date = document.getElementById('date').value || new Date().toISOString().split('T')[0];
-      }
+    document
+      .getElementById('transaction-form')
+      .addEventListener(
+        'submit',
+        (e) => {
 
-      data[currentPage].push(newEntry);
-      
-      if (currentPage === 'page2') {
-        const activeMonth = selectedMonth === 'ALL' ? currentYYYYMM : selectedMonth;
-        setChargeState(newEntry.id, activeMonth, 'pointage', true);
-        setChargeState(newEntry.id, activeMonth, 'traite', false);
-      }
+          e.preventDefault();
 
-      save();
 
-      e.target.reset();
-      const dateEl = document.getElementById('date');
-      if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
-      updateMonthFilterOptions();
-    });
+          const reserveCat =
+            document.getElementById(
+              'reserve-category'
+            ).value;
+
+
+          const isReserve =
+            reserveCat !== 'none' &&
+            reserveCat !== '__new__';
+
+
+          const newEntry = {
+
+            id:
+              Date.now(),
+
+            cheque:
+              document.getElementById(
+                'cheque'
+              ).value || '',
+
+            ordre:
+              document.getElementById(
+                'ordre'
+              ).value || '',
+
+            retrait:
+              parseFloat(
+                document.getElementById(
+                  'retrait'
+                ).value
+              ) || 0,
+
+            versement:
+              parseFloat(
+                document.getElementById(
+                  'versement'
+                ).value
+              ) || 0,
+
+            pointage:
+              currentPage === 'page2'
+                ? true
+                : false,
+
+            traite:
+              false,
+
+            isReserve:
+              isReserve,
+
+            reserveCategory:
+              isReserve
+                ? reserveCat
+                : ''
+
+          };
+
+
+          if (
+            currentPage === 'page1'
+          ) {
+
+            newEntry.date =
+              document.getElementById(
+                'date'
+              ).value ||
+              new Date()
+                .toISOString()
+                .split('T')[0];
+
+          }
+
+
+          data[currentPage].push(
+            newEntry
+          );
+
+
+          if (
+            currentPage === 'page2'
+          ) {
+
+            const activeMonth =
+              selectedMonth === 'ALL'
+                ? currentYYYYMM
+                : selectedMonth;
+
+
+            setChargeState(
+              newEntry.id,
+              activeMonth,
+              'pointage',
+              true
+            );
+
+
+            setChargeState(
+              newEntry.id,
+              activeMonth,
+              'traite',
+              false
+            );
+
+          }
+
+
+          save();
+
+
+          e.target.reset();
+
+
+          const dateEl =
+            document.getElementById(
+              'date'
+            );
+
+
+          if (dateEl) {
+
+            dateEl.value =
+              new Date()
+                .toISOString()
+                .split('T')[0];
+
+          }
+
+
+          updateMonthFilterOptions();
+
+        }
+      );
+
+
+    /* =========================================================
+       FORMAT DATE
+    ========================================================= */
 
     function formatDate(dateStr) {
+
       if (!dateStr) return '-';
-      const parts = dateStr.split('-');
-      return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : dateStr;
+
+
+      const parts =
+        dateStr.split('-');
+
+
+      return parts.length === 3
+        ? `${parts[2]}/${parts[1]}/${parts[0]}`
+        : dateStr;
+
     }
 
-    // FONCTION CRUCIALE CORRIGÉE : Calcule le solde exact du compte courant à la fin d'un mois précis (YYYY-MM)
-    function getCompteCourantBalanceAtMonth(targetMonthKey) {
-      let balance = 0;
-      const sortedOps = [...(data.page1 || [])].sort((a, b) => new Date(a.date) - new Date(b.date));
 
-      // Retrouver tous les mois distincts présents ou passés jusqu'à targetMonthKey
-      const allMonths = new Set();
-      if (targetMonthKey) allMonths.add(targetMonthKey);
-      sortedOps.forEach(t => {
-        if (t.date && t.date.length >= 7) {
-          if (t.date.substring(0, 7) <= targetMonthKey) {
-            allMonths.add(t.date.substring(0, 7));
-          }
-        }
-      });
-      const sortedMonthsList = Array.from(allMonths).sort();
+    /* =========================================================
+       CALCUL DU SOLDE FINAL D'UN MOIS
+       
+       CETTE FONCTION EST LA CORRECTION PRINCIPALE.
+       
+       Elle calcule le solde cumulé du compte courant
+       jusqu'à la fin du mois demandé.
+    ========================================================= */
 
-      // On simule mois par mois du tout début jusqu'au mois cible
-      sortedMonthsList.forEach(mKey => {
-        // Ajouter les charges fixes pointées de ce mois s'il y en a
-        (data.page2 || []).forEach(t => {
-          const cState = getChargeState(t.id, mKey);
-          if (cState.pointage) {
-            const isReserve = t.isReserve || Boolean(t.reserveCategory);
-            if (!isReserve) {
-              balance += (t.versement - t.retrait);
-            }
-          }
-        });
+    function getCompteCourantBalanceAtMonth(
+      targetMonthKey
+    ) {
 
-        // Ajouter les opérations courantes de ce mois
-        sortedOps.forEach(t => {
-          if (t.date && t.date.substring(0, 7) === mKey) {
-            const isReserve = t.isReserve || Boolean(t.reserveCategory);
-            if (t.pointage && !isReserve) {
-              balance += (t.versement - t.retrait);
-            }
-          }
-        });
-      });
-
-      return balance;
-    }
-
-    function render() {
-      const tableBody = document.getElementById('table-body');
-      const summaryBar = document.getElementById('summary-bar');
-      tableBody.innerHTML = '';
-
-      let totalReserves = 0;
-      const soldesParReserve = {};
-      (data.reservesCategories || ['Vacances', 'Noël']).forEach(cat => soldesParReserve[cat] = 0);
-
-      // Calcul global des réserves (toutes dates)
-      (data.page1 || []).filter(t => t.pointage).forEach(t => {
-        const isReserve = t.isReserve || Boolean(t.reserveCategory);
-        if (isReserve) {
-          const delta = t.versement - t.retrait;
-          const category = t.reserveCategory || 'Réserve';
-          totalReserves += delta;
-          if (!soldesParReserve[category]) soldesParReserve[category] = 0;
-          soldesParReserve[category] += delta;
-        }
-      });
-
-      const activeMonth = selectedMonth === 'ALL' ? currentYYYYMM : selectedMonth;
-
-      // Calcul des charges fixes pointées de l'onglet 2 pour le mois actif uniquement
-      let chargesFixesPointesCompte = 0;
-      data.page2.forEach(t => {
-        const cState = getChargeState(t.id, activeMonth);
-        if (cState.pointage) {
-          const delta = t.versement - t.retrait;
-          const isReserve = t.isReserve || Boolean(t.reserveCategory);
-          const category = t.reserveCategory || 'Réserve';
-
-          if (isReserve) {
-            totalReserves += delta;
-            if (!soldesParReserve[category]) soldesParReserve[category] = 0;
-            soldesParReserve[category] += delta;
-          } else {
-            chargesFixesPointesCompte += delta;
-          }
-        }
-      });
-
-      if (currentPage === 'page1') {
-        // --- NOUVEAU REPORT : On va chercher la fin exacte du mois précédent ---
-        let soldeInitialReporte = 0;
-        if (selectedMonth !== 'ALL') {
-          // Trouver le mois précédent
-          const [yr, mn] = selectedMonth.split('-').map(Number);
-          const prevDate = new Date(yr, mn - 2, 1); // Mois précédent
-          const prevMonthKey = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
-          
-          soldeInitialReporte = getCompteCourantBalanceAtMonth(prevMonthKey);
-        }
-
-        // On démarre le solde courant du mois avec ce report propre + les charges fixes de ce mois
-        let runningCompteCourant = soldeInitialReporte + chargesFixesPointesCompte;
-
-        // Affichage de la ligne de report
-        tableBody.innerHTML += `
-          <tr>
-            <td style="color: var(--text-muted)">-</td>
-            <td style="color: var(--text-muted)">-</td>
-            <td><strong>Solde initial (Report fin mois précédent)</strong></td>
-            <td class="amount">-</td>
-            <td class="amount">-</td>
-            <td class="amount ${soldeInitialReporte < 0 ? 'negative' : ''}"><strong>${soldeInitialReporte.toFixed(2)} €</strong></td>
-            <td class="center">-</td>
-            <td></td>
-          </tr>
-        `;
-
-        if (data.page2.length > 0) {
-          tableBody.innerHTML += `
-            <tr class="row-charges-total">
-              <td style="color: var(--text-muted)">—</td>
-              <td style="color: var(--text-muted)">—</td>
-              <td><strong style="color: #f59e0b;">Charges Fixes Pointées (Feuille 2)</strong></td>
-              <td class="amount">${chargesFixesPointesCompte < 0 ? '<span class="amount-minus">' + chargesFixesPointesCompte.toFixed(2) + ' €</span>' : '-'}</td>
-              <td class="amount">${chargesFixesPointesCompte > 0 ? '<span class="amount-plus">+' + chargesFixesPointesCompte.toFixed(2) + ' €</span>' : '-'}</td>
-              <td class="amount ${runningCompteCourant < 0 ? 'negative' : ''}">${runningCompteCourant.toFixed(2)} €</td>
-              <td class="center">-</td>
-              <td></td>
-            </tr>
-          `;
-        }
-
-        const sortedOps = [...data.page1].sort((a, b) => new Date(a.date) - new Date(b.date));
-
-        sortedOps.forEach(t => {
-          const itemMonthKey = t.date ? t.date.substring(0, 7) : '';
-          const matchesMonth = (selectedMonth === 'ALL' || itemMonthKey === selectedMonth);
-
-          const delta = t.versement - t.retrait;
-          const isReserve = t.isReserve || Boolean(t.reserveCategory);
-
-          if (t.pointage && !isReserve && itemMonthKey === selectedMonth) {
-            runningCompteCourant += delta;
-          }
-
-          if (!matchesMonth) return;
-
-          const row = document.createElement('tr');
-          if (isReserve) row.classList.add('row-reserve');
-
-          row.innerHTML = `
-            <td style="color: var(--text-muted)">${formatDate(t.date)}</td>
-            <td style="color: var(--text-muted)">${t.cheque || '-'}</td>
-            <td>${isReserve ? `<span class="tag-reserve">${t.reserveCategory || 'Réserve'}</span>` : ''} <strong>${t.ordre}</strong></td>
-            <td class="amount">${t.retrait > 0 ? '<span class="amount-minus">-' + t.retrait.toFixed(2) + ' €</span>' : ''}</td>
-            <td class="amount">${t.versement > 0 ? '<span class="amount-plus">+' + t.versement.toFixed(2) + ' €</span>' : ''}</td>
-            <td class="amount ${runningCompteCourant < 0 ? 'negative' : ''}">${runningCompteCourant.toFixed(2)} €</td>
-            <td class="center">
-              <input type="checkbox" class="chk-pointage" data-id="${t.id}" ${t.pointage ? 'checked' : ''}>
-            </td>
-            <td class="center">
-              <button class="btn-del" data-id="${t.id}">✕</button>
-            </td>
-          `;
-          tableBody.appendChild(row);
-        });
-
-        // Calcul final exact pour l'encart en bas
-        let totalCompteCourantFinal = soldeInitialReporte + chargesFixesPointesCompte;
-        sortedOps.forEach(t => {
-          const itemMonthKey = t.date ? t.date.substring(0, 7) : '';
-          const isReserve = t.isReserve || Boolean(t.reserveCategory);
-          if (t.pointage && !isReserve && itemMonthKey === selectedMonth) {
-            totalCompteCourantFinal += (t.versement - t.retrait);
-          }
-        });
-
-        const soldeTotalGlobal = totalCompteCourantFinal + totalReserves;
-
-        let reservesCardsHtml = '';
-        Object.entries(soldesParReserve).forEach(([cat, solde]) => {
-          reservesCardsHtml += `
-            <div class="summary-card">
-              <div class="summary-title">Réserve : ${cat}</div>
-              <div class="summary-val reserve">${solde.toFixed(2)} €</div>
-            </div>
-          `;
-        });
-
-        summaryBar.innerHTML = `
-          <div class="summary-card">
-            <div class="summary-title">Solde Compte Courant</div>
-            <div class="summary-val ${totalCompteCourantFinal < 0 ? 'negative' : ''}">${totalCompteCourantFinal.toFixed(2)} €</div>
-          </div>
-          ${reservesCardsHtml}
-          <div class="summary-card">
-            <div class="summary-title">Total Réserves Cumulées</div>
-            <div class="summary-val reserve">${totalReserves.toFixed(2)} €</div>
-          </div>
-          <div class="summary-card">
-            <div class="summary-title">Solde Global (Compte + Réserves)</div>
-            <div class="summary-val total">${soldeTotalGlobal.toFixed(2)} €</div>
-          </div>
-        `;
-
-      } else {
-        data.page2.forEach(t => {
-          const cState = getChargeState(t.id, activeMonth);
-          const isReserve = t.isReserve || Boolean(t.reserveCategory);
-          const category = t.reserveCategory || 'Réserve';
-          const row = document.createElement('tr');
-          if (isReserve) row.classList.add('row-reserve');
-
-          row.innerHTML = `
-            <td style="color: var(--text-muted)">${t.cheque || '-'}</td>
-            <td>${isReserve ? `<span class="tag-reserve">${category}</span>` : ''} <strong>${t.ordre}</strong></td>
-            <td class="amount">${t.retrait > 0 ? '<span class="amount-minus">-' + t.retrait.toFixed(2) + ' €</span>' : '-'}</td>
-            <td class="amount">${t.versement > 0 ? '<span class="amount-plus">+' + t.versement.toFixed(2) + ' €</span>' : '-'}</td>
-            <td class="center">
-              <input type="checkbox" class="chk-pointage" data-id="${t.id}" ${cState.pointage ? 'checked' : ''}>
-            </td>
-            <td class="center">
-              <input type="checkbox" class="chk-traite" data-id="${t.id}" ${cState.traite ? 'checked' : ''}>
-            </td>
-            <td class="center">
-              <button class="btn-del" data-id="${t.id}">✕</button>
-            </td>
-          `;
-          tableBody.appendChild(row);
-        });
-
-        const totalRetraits = data.page2.reduce((acc, t) => acc + t.retrait, 0);
-        const totalVersements = data.page2.reduce((acc, t) => acc + t.versement, 0);
-        const netChargesTotal = data.page2.reduce((total, t) => total + (t.versement - t.retrait), 0);
-
-        summaryBar.innerHTML = `
-          <div class="summary-card">
-            <div class="summary-title">Total Charges / Débits</div>
-            <div class="summary-val negative">-${totalRetraits.toFixed(2)} €</div>
-          </div>
-          <div class="summary-card">
-            <div class="summary-title">Total Revenus / Crédits</div>
-            <div class="summary-val" style="color:var(--success);">+${totalVersements.toFixed(2)} €</div>
-          </div>
-          <div class="summary-card">
-            <div class="summary-title">Bilan Mensuel Fixe</div>
-            <div class="summary-val">${netChargesTotal >= 0 ? '+' : ''}${netChargesTotal.toFixed(2)} €</div>
-          </div>
-        `;
+      if (!targetMonthKey) {
+        return 0;
       }
 
-      document.querySelectorAll('.chk-pointage').forEach(chk => {
-        chk.addEventListener('change', (e) => {
-          const id = Number(e.target.dataset.id);
-          if (currentPage === 'page1') {
-            data.page1 = data.page1.map(t => t.id === id ? { ...t, pointage: e.target.checked } : t);
-          } else {
-            setChargeState(id, activeMonth, 'pointage', e.target.checked);
+
+      let balance = 0;
+
+
+      /* -------------------------------------------------------
+         OPERATIONS DE L'ONGLET PRINCIPAL
+         ------------------------------------------------------- */
+
+      const sortedOps =
+        [...(data.page1 || [])]
+          .filter(
+            t =>
+              t.date &&
+              t.date.length >= 7
+          )
+          .sort(
+            (a, b) =>
+              new Date(a.date) -
+              new Date(b.date)
+          );
+
+
+      sortedOps.forEach(
+        t => {
+
+          const monthKey =
+            t.date.substring(0, 7);
+
+
+          if (
+            monthKey <= targetMonthKey
+          ) {
+
+            const isReserve =
+              t.isReserve ||
+              Boolean(
+                t.reserveCategory
+              );
+
+
+            /*
+             * Les réserves ne modifient pas
+             * le solde du compte courant.
+             */
+
+            if (
+              t.pointage &&
+              !isReserve
+            ) {
+
+              balance +=
+                (Number(t.versement) || 0) -
+                (Number(t.retrait) || 0);
+
+            }
+
           }
-          save();
-        });
-      });
 
-      document.querySelectorAll('.chk-traite').forEach(chk => {
-        chk.addEventListener('change', (e) => {
-          const id = Number(e.target.dataset.id);
-          setChargeState(id, activeMonth, 'traite', e.target.checked);
-          save();
-        });
-      });
+        }
+      );
 
-      document.querySelectorAll('.btn-del').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const id = Number(e.target.dataset.id);
-          data[currentPage] = data[currentPage].filter(t => t.id !== id);
-          save();
-        });
-      });
+
+      /* -------------------------------------------------------
+         CHARGES FIXES
+         
+         On récupère tous les mois existants jusqu'au
+         mois demandé.
+         ------------------------------------------------------- */
+
+      const monthsToCalculate =
+        new Set();
+
+
+      monthsToCalculate.add(
+        targetMonthKey
+      );
+
+
+      /* Mois présents dans les opérations */
+
+      sortedOps.forEach(
+        t => {
+
+          const monthKey =
+            t.date.substring(0, 7);
+
+
+          if (
+            monthKey <= targetMonthKey
+          ) {
+
+            monthsToCalculate.add(
+              monthKey
+            );
+
+          }
+
+        }
+      );
+
+
+      /* Mois présents dans les charges fixes */
+
+      Object.keys(
+        data.monthlyChargesState || {}
+      )
+      .forEach(
+        monthKey => {
+
+          if (
+            monthKey !== 'ALL' &&
+            monthKey <= targetMonthKey
+          ) {
+
+            monthsToCalculate.add(
+              monthKey
+            );
+
+          }
+
+        }
+      );
+
+
+      /*
+       * On applique les charges fixes mois par mois.
+       */
+
+      [...monthsToCalculate]
+        .sort()
+        .forEach(
+          monthKey => {
+
+            (data.page2 || [])
+              .forEach(
+                t => {
+
+                  const state =
+                    getChargeState(
+                      t.id,
+                      monthKey
+                    );
+
+
+                  if (
+                    state.pointage
+                  ) {
+
+                    const isReserve =
+                      t.isReserve ||
+                      Boolean(
+                        t.reserveCategory
+                      );
+
+
+                    if (
+                      !isReserve
+                    ) {
+
+                      balance +=
+                        (Number(t.versement) || 0) -
+                        (Number(t.retrait) || 0);
+
+                    }
+
+                  }
+
+                }
+              );
+
+          }
+        );
+
+
+      return balance;
+
     }
+
+
+    /* =========================================================
+       RENDER
+    ========================================================= */
+
+    function render() {
+
+      const tableBody =
+        document.getElementById(
+          'table-body'
+        );
+
+
+      const summaryBar =
+        document.getElementById(
+          'summary-bar'
+        );
+
+
+      tableBody.innerHTML = '';
+
+
+      let totalReserves =
+        0;
+
+
+      const soldesParReserve =
+        {};
+
+
+      (
+        data.reservesCategories ||
+        [
+          'Vacances',
+          'Noël'
+        ]
+      )
+      .forEach(
+        cat => {
+
+          soldesParReserve[cat] =
+            0;
+
+        }
+      );
+
+
+      /* -------------------------------------------------------
+         RESERVES PAGE 1
+         ------------------------------------------------------- */
+
+      (data.page1 || [])
+        .filter(
+          t => t.pointage
+        )
+        .forEach(
+          t => {
+
+            const isReserve =
+              t.isReserve ||
+              Boolean(
+                t.reserveCategory
+              );
+
+
+            if (isReserve) {
+
+              const delta =
+                (Number(t.versement) || 0) -
+                (Number(t.retrait) || 0);
+
+
+              const category =
+                t.reserveCategory ||
+                'Réserve';
+
+
+              totalReserves +=
+                delta;
+
+
+              if (
+                !soldesParReserve[category]
+              ) {
+
+                soldesParReserve[category] =
+                  0;
+
+              }
+
+
+              soldesParReserve[category] +=
+                delta;
+
+            }
+
+          }
+        );
+
+
+      const activeMonth =
+        selectedMonth === 'ALL'
+          ? currentYYYYMM
+          : selectedMonth;
+
+
+      /* -------------------------------------------------------
+         CHARGES FIXES DU MOIS ACTUEL
+         ------------------------------------------------------- */
+
+      let chargesFixesPointesCompte =
+        0;
+
+
+      data.page2.forEach(
+        t => {
+
+          const cState =
+            getChargeState(
+              t.id,
+              activeMonth
+            );
+
+
+          if (
+            cState.pointage
+          ) {
+
+            const delta =
+              (Number(t.versement) || 0) -
+              (Number(t.retrait) || 0);
+
+
+            const isReserve =
+              t.isReserve ||
+              Boolean(
+                t.reserveCategory
+              );
+
+
+            const category =
+              t.reserveCategory ||
+              'Réserve';
+
+
+            if (isReserve) {
+
+              totalReserves +=
+                delta;
+
+
+              if (
+                !soldesParReserve[category]
+              ) {
+
+                soldesParReserve[category] =
+                  0;
+
+              }
+
+
+              soldesParReserve[category] +=
+                delta;
+
+            } else {
+
+              chargesFixesPointesCompte +=
+                delta;
+
+            }
+
+          }
+
+        }
+      );
+
+
+      /* =======================================================
+         PAGE 1 : OPERATIONS
+      ======================================================= */
+
+      if (
+        currentPage === 'page1'
+      ) {
+
+        /*
+         * -----------------------------------------------------
+         * REPORT DU MOIS PRECEDENT
+         * -----------------------------------------------------
+         */
+
+        let soldeInitialReporte =
+          0;
+
+
+        if (
+          selectedMonth !== 'ALL'
+        ) {
+
+          const [
+            year,
+            month
+          ] =
+            selectedMonth
+              .split('-')
+              .map(Number);
+
+
+          /*
+           * Calcul du mois précédent.
+           *
+           * Exemple :
+           * 2026-10 -> 2026-09
+           * 2026-01 -> 2025-12
+           */
+
+          const previousDate =
+            new Date(
+              year,
+              month - 2,
+              1
+            );
+
+
+          const previousMonthKey =
+            `${previousDate.getFullYear()}-${String(
+              previousDate.getMonth() + 1
+            ).padStart(2, '0')}`;
+
+
+          /*
+           * LE SOLDE FINAL DU MOIS PRECEDENT
+           * DEVIENT LE SOLDE INITIAL DU MOIS ACTUEL.
+           */
+
+          soldeInitialReporte =
+            getCompteCourantBalanceAtMonth(
+              previousMonthKey
+            );
+
+        }
+
+
+        /*
+         * Le mois actuel commence donc avec
+         * le solde final du mois précédent.
+         *
+         * Ensuite on ajoute les charges fixes
+         * du mois actuel.
+         */
+
+        let runningCompteCourant =
+          soldeInitialReporte +
+          chargesFixesPointesCompte;
+
+
+        /* -----------------------------------------------------
+           LIGNE DE REPORT
+           ----------------------------------------------------- */
+
+        tableBody.innerHTML += `
+
+          <tr>
+
+            <td style="color:var(--text-muted)">
+              -
+            </td>
+
+            <td style="color:var(--text-muted)">
+              -
+            </td>
+
+            <td>
+              <strong>
+                Solde initial (Report fin mois précédent)
+              </strong>
+            </td>
+
+            <td class="amount">
+              -
+            </td>
+
+            <td class="amount">
+              -
+            </td>
+
+            <td
+              class="amount ${
+                soldeInitialReporte < 0
+                  ? 'negative'
+                  : ''
+              }"
+            >
+              <strong>
+                ${soldeInitialReporte.toFixed(2)} €
+              </strong>
+            </td>
+
+            <td class="center">
+              -
+            </td>
+
+            <td></td>
+
+          </tr>
+
+        `;
+
+
+        /* -----------------------------------------------------
+           CHARGES FIXES
+           ----------------------------------------------------- */
+
+        if (
+          data.page2.length > 0
+        ) {
+
+          tableBody.innerHTML += `
+
+            <tr class="row-charges-total">
+
+              <td style="color:var(--text-muted)">
+                —
+              </td>
+
+              <td style="color:var(--text-muted)">
+                —
+              </td>
+
+              <td>
+                <strong style="color:#f59e0b;">
+                  Charges Fixes Pointées (Feuille 2)
+                </strong>
+              </td>
+
+              <td class="amount">
+
+                ${
+                  chargesFixesPointesCompte < 0
+
+                    ? `<span class="amount-minus">
+                        ${chargesFixesPointesCompte.toFixed(2)} €
+                       </span>`
+
+                    : '-'
+                }
+
+              </td>
+
+              <td class="amount">
+
+                ${
+                  chargesFixesPointesCompte > 0
+
+                    ? `<span class="amount-plus">
+                        +${chargesFixesPointesCompte.toFixed(2)} €
+                       </span>`
+
+                    : '-'
+                }
+
+              </td>
+
+              <td
+                class="amount ${
+                  runningCompteCourant < 0
+                    ? 'negative'
+                    : ''
+                }"
+              >
+                ${runningCompteCourant.toFixed(2)} €
+              </td>
+
+              <td class="center">
+                -
+              </td>
+
+              <td></td>
+
+            </tr>
+
+          `;
+
+        }
+
+
+        /* -----------------------------------------------------
+           OPERATIONS DU MOIS
+           ----------------------------------------------------- */
+
+        const sortedOps =
+          [...data.page1]
+            .sort(
+              (a, b) =>
+                new Date(a.date) -
+                new Date(b.date)
+            );
+
+
+        sortedOps.forEach(
+          t => {
+
+            const itemMonthKey =
+              t.date
+                ? t.date.substring(0, 7)
+                : '';
+
+
+            const matchesMonth =
+              (
+                selectedMonth === 'ALL' ||
+                itemMonthKey === selectedMonth
+              );
+
+
+            const delta =
+              (Number(t.versement) || 0) -
+              (Number(t.retrait) || 0);
+
+
+            const isReserve =
+              t.isReserve ||
+              Boolean(
+                t.reserveCategory
+              );
+
+
+            /*
+             * SEULEMENT les opérations du mois affiché
+             * sont ajoutées ici.
+             *
+             * Les mois précédents sont déjà compris
+             * dans soldeInitialReporte.
+             */
+
+            if (
+              t.pointage &&
+              !isReserve &&
+              itemMonthKey === selectedMonth
+            ) {
+
+              runningCompteCourant +=
+                delta;
+
+            }
+
+
+            if (!matchesMonth) {
+              return;
+            }
+
+
+            const row =
+              document.createElement('tr');
+
+
+            if (isReserve) {
+
+              row.classList.add(
+                'row-reserve'
+              );
+
+            }
+
+
+            row.innerHTML = `
+
+              <td style="color:var(--text-muted)">
+                ${formatDate(t.date)}
+              </td>
+
+              <td style="color:var(--text-muted)">
+                ${t.cheque || '-'}
+              </td>
+
+              <td>
+
+                ${
+                  isReserve
+
+                    ? `<span class="tag-reserve">
+                        ${t.reserveCategory || 'Réserve'}
+                       </span>`
+
+                    : ''
+                }
+
+                <strong>
+                  ${t.ordre}
+                </strong>
+
+              </td>
+
+              <td class="amount">
+
+                ${
+                  t.retrait > 0
+
+                    ? `<span class="amount-minus">
+                        -${Number(t.retrait).toFixed(2)} €
+                       </span>`
+
+                    : ''
+                }
+
+              </td>
+
+              <td class="amount">
+
+                ${
+                  t.versement > 0
+
+                    ? `<span class="amount-plus">
+                        +${Number(t.versement).toFixed(2)} €
+                       </span>`
+
+                    : ''
+                }
+
+              </td>
+
+              <td
+                class="amount ${
+                  runningCompteCourant < 0
+                    ? 'negative'
+                    : ''
+                }"
+              >
+                ${runningCompteCourant.toFixed(2)} €
+              </td>
+
+              <td class="center">
+
+                <input
+                  type="checkbox"
+                  class="chk-pointage"
+                  data-id="${t.id}"
+                  ${t.pointage ? 'checked' : ''}
+                >
+
+              </td>
+
+              <td class="center">
+
+                <button
+                  class="btn-del"
+                  data-id="${t.id}"
+                >
+                  ✕
+                </button>
+
+              </td>
+
+            `;
+
+
+            tableBody.appendChild(
+              row
+            );
+
+          }
+        );
+
+
+        /* -----------------------------------------------------
+           CALCUL DU SOLDE FINAL DU MOIS
+           ----------------------------------------------------- */
+
+        let totalCompteCourantFinal =
+          soldeInitialReporte +
+          chargesFixesPointesCompte;
+
+
+        sortedOps.forEach(
+          t => {
+
+            const itemMonthKey =
+              t.date
+                ? t.date.substring(0, 7)
+                : '';
+
+
+            const isReserve =
+              t.isReserve ||
+              Boolean(
+                t.reserveCategory
+              );
+
+
+            if (
+              t.pointage &&
+              !isReserve &&
+              itemMonthKey === selectedMonth
+            ) {
+
+              totalCompteCourantFinal +=
+                (Number(t.versement) || 0) -
+                (Number(t.retrait) || 0);
+
+            }
+
+          }
+        );
+
+
+        /*
+         * IMPORTANT :
+         *
+         * totalCompteCourantFinal est maintenant
+         * exactement le solde qui sera reporté
+         * au mois suivant.
+         */
+
+
+        const soldeTotalGlobal =
+          totalCompteCourantFinal +
+          totalReserves;
+
+
+        let reservesCardsHtml =
+          '';
+
+
+        Object.entries(
+          soldesParReserve
+        )
+        .forEach(
+          ([cat, solde]) => {
+
+            reservesCardsHtml += `
+
+              <div class="summary-card">
+
+                <div class="summary-title">
+                  Réserve : ${cat}
+                </div>
+
+                <div class="summary-val reserve">
+                  ${solde.toFixed(2)} €
+                </div>
+
+              </div>
+
+            `;
+
+          }
+        );
+
+
+        summaryBar.innerHTML = `
+
+          <div class="summary-card">
+
+            <div class="summary-title">
+              Solde Compte Courant
+            </div>
+
+            <div
+              class="summary-val ${
+                totalCompteCourantFinal < 0
+                  ? 'negative'
+                  : ''
+              }"
+            >
+              ${totalCompteCourantFinal.toFixed(2)} €
+            </div>
+
+          </div>
+
+          ${reservesCardsHtml}
+
+          <div class="summary-card">
+
+            <div class="summary-title">
+              Total Réserves Cumulées
+            </div>
+
+            <div class="summary-val reserve">
+              ${totalReserves.toFixed(2)} €
+            </div>
+
+          </div>
+
+          <div class="summary-card">
+
+            <div class="summary-title">
+              Solde Global (Compte + Réserves)
+            </div>
+
+            <div class="summary-val total">
+              ${soldeTotalGlobal.toFixed(2)} €
+            </div>
+
+          </div>
+
+        `;
+
+
+      } else {
+
+        /* =====================================================
+           PAGE 2 : CHARGES FIXES
+        ===================================================== */
+
+        data.page2.forEach(
+          t => {
+
+            const cState =
+              getChargeState(
+                t.id,
+                activeMonth
+              );
+
+
+            const isReserve =
+              t.isReserve ||
+              Boolean(
+                t.reserveCategory
+              );
+
+
+            const category =
+              t.reserveCategory ||
+              'Réserve';
+
+
+            const row =
+              document.createElement('tr');
+
+
+            if (isReserve) {
+
+              row.classList.add(
+                'row-reserve'
+              );
+
+            }
+
+
+            row.innerHTML = `
+
+              <td style="color:var(--text-muted)">
+                ${t.cheque || '-'}
+              </td>
+
+              <td>
+
+                ${
+                  isReserve
+
+                    ? `<span class="tag-reserve">
+                        ${category}
+                       </span>`
+
+                    : ''
+                }
+
+                <strong>
+                  ${t.ordre}
+                </strong>
+
+              </td>
+
+              <td class="amount">
+
+                ${
+                  t.retrait > 0
+
+                    ? `<span class="amount-minus">
+                        -${Number(t.retrait).toFixed(2)} €
+                       </span>`
+
+                    : '-'
+                }
+
+              </td>
+
+              <td class="amount">
+
+                ${
+                  t.versement > 0
+
+                    ? `<span class="amount-plus">
+                        +${Number(t.versement).toFixed(2)} €
+                       </span>`
+
+                    : '-'
+                }
+
+              </td>
+
+              <td class="center">
+
+                <input
+                  type="checkbox"
+                  class="chk-pointage"
+                  data-id="${t.id}"
+                  ${cState.pointage ? 'checked' : ''}
+                >
+
+              </td>
+
+              <td class="center">
+
+                <input
+                  type="checkbox"
+                  class="chk-traite"
+                  data-id="${t.id}"
+                  ${cState.traite ? 'checked' : ''}
+                >
+
+              </td>
+
+              <td class="center">
+
+                <button
+                  class="btn-del"
+                  data-id="${t.id}"
+                >
+                  ✕
+                </button>
+
+              </td>
+
+            `;
+
+
+            tableBody.appendChild(
+              row
+            );
+
+          }
+        );
+
+
+        const totalRetraits =
+          data.page2.reduce(
+            (acc, t) =>
+              acc +
+              (Number(t.retrait) || 0),
+            0
+          );
+
+
+        const totalVersements =
+          data.page2.reduce(
+            (acc, t) =>
+              acc +
+              (Number(t.versement) || 0),
+            0
+          );
+
+
+        const netChargesTotal =
+          data.page2.reduce(
+            (total, t) =>
+              total +
+              (
+                (Number(t.versement) || 0) -
+                (Number(t.retrait) || 0)
+              ),
+            0
+          );
+
+
+        summaryBar.innerHTML = `
+
+          <div class="summary-card">
+
+            <div class="summary-title">
+              Total Charges / Débits
+            </div>
+
+            <div class="summary-val negative">
+              -${totalRetraits.toFixed(2)} €
+            </div>
+
+          </div>
+
+          <div class="summary-card">
+
+            <div class="summary-title">
+              Total Revenus / Crédits
+            </div>
+
+            <div
+              class="summary-val"
+              style="color:var(--success);"
+            >
+              +${totalVersements.toFixed(2)} €
+            </div>
+
+          </div>
+
+          <div class="summary-card">
+
+            <div class="summary-title">
+              Bilan Mensuel Fixe
+            </div>
+
+            <div class="summary-val">
+
+              ${
+                netChargesTotal >= 0
+                  ? '+'
+                  : ''
+              }${netChargesTotal.toFixed(2)} €
+
+            </div>
+
+          </div>
+
+        `;
+
+      }
+
+
+      /* =======================================================
+         CHECKBOX POINTAGE
+      ======================================================= */
+
+      document
+        .querySelectorAll(
+          '.chk-pointage'
+        )
+        .forEach(
+          chk => {
+
+            chk.addEventListener(
+              'change',
+              (e) => {
+
+                const id =
+                  Number(
+                    e.target.dataset.id
+                  );
+
+
+                if (
+                  currentPage === 'page1'
+                ) {
+
+                  data.page1 =
+                    data.page1.map(
+                      t =>
+                        t.id === id
+
+                          ? {
+                              ...t,
+                              pointage:
+                                e.target.checked
+                            }
+
+                          : t
+                    );
+
+                } else {
+
+                  setChargeState(
+                    id,
+                    activeMonth,
+                    'pointage',
+                    e.target.checked
+                  );
+
+                }
+
+
+                save();
+
+              }
+            );
+
+          }
+        );
+
+
+      /* =======================================================
+         CHECKBOX TRAITE
+      ======================================================= */
+
+      document
+        .querySelectorAll(
+          '.chk-traite'
+        )
+        .forEach(
+          chk => {
+
+            chk.addEventListener(
+              'change',
+              (e) => {
+
+                const id =
+                  Number(
+                    e.target.dataset.id
+                  );
+
+
+                setChargeState(
+                  id,
+                  activeMonth,
+                  'traite',
+                  e.target.checked
+                );
+
+
+                save();
+
+              }
+            );
+
+          }
+        );
+
+
+      /* =======================================================
+         SUPPRESSION
+      ======================================================= */
+
+      document
+        .querySelectorAll(
+          '.btn-del'
+        )
+        .forEach(
+          btn => {
+
+            btn.addEventListener(
+              'click',
+              (e) => {
+
+                const id =
+                  Number(
+                    e.target.dataset.id
+                  );
+
+
+                data[currentPage] =
+                  data[currentPage]
+                    .filter(
+                      t => t.id !== id
+                    );
+
+
+                save();
+
+              }
+            );
+
+          }
+        );
+
+    }
+
+
+    /* =========================================================
+       INITIALISATION
+    ========================================================= */
 
     updateMonthFilterOptions();
     updateFormAndHead();
+
   </script>
+
 </body>
 </html>

@@ -690,7 +690,7 @@
       });
 
       if (currentPage === 'page1') {
-        // --- CALCUL DU VRAI REPORT DU MOIS PRÉCÉDENT (UNIQUEMENT LES OPÉRATIONS DE L'ONGLET 1) ---
+        // --- REPORT EXACT DU MOIS PRÉCÉDENT (Somme de toutes les opérations des mois antérieurs) ---
         let soldeInitialReporte = 0;
         if (selectedMonth !== 'ALL') {
           const sortedAllOps = [...data.page1].sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -714,7 +714,7 @@
             <td><strong>Solde initial (Report mois précédent)</strong></td>
             <td class="amount">-</td>
             <td class="amount">-</td>
-            <td class="amount"><strong>${soldeInitialReporte.toFixed(2)} €</strong></td>
+            <td class="amount ${soldeInitialReporte < 0 ? 'negative' : ''}"><strong>${soldeInitialReporte.toFixed(2)} €</strong></td>
             <td class="center">-</td>
             <td></td>
           </tr>

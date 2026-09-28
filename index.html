@@ -647,6 +647,50 @@
       return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : dateStr;
     }
 
+    // FONCTION CRUCIALE CORRIGÉE : Calcule le solde exact du compte courant à la fin d'un mois précis (YYYY-MM)
+    function getCompteCourantBalanceAtMonth(targetMonthKey) {
+      let balance = 0;
+      const sortedOps = [...(data.page1 || [])].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      // Retrouver tous les mois distincts présents ou passés jusqu'à targetMonthKey
+      const allMonths = new Set();
+      if (targetMonthKey) allMonths.add(targetMonthKey);
+      sortedOps.forEach(t => {
+        if (t.date && t.date.length >= 7) {
+          if (t.date.substring(0, 7) <= targetMonthKey) {
+            allMonths.add(t.date.substring(0, 7));
+          }
+        }
+      });
+      const sortedMonthsList = Array.from(allMonths).sort();
+
+      // On simule mois par mois du tout début jusqu'au mois cible
+      sortedMonthsList.forEach(mKey => {
+        // Ajouter les charges fixes pointées de ce mois s'il y en a
+        (data.page2 || []).forEach(t => {
+          const cState = getChargeState(t.id, mKey);
+          if (cState.pointage) {
+            const isReserve = t.isReserve || Boolean(t.reserveCategory);
+            if (!isReserve) {
+              balance += (t.versement - t.retrait);
+            }
+          }
+        });
+
+        // Ajouter les opérations courantes de ce mois
+        sortedOps.forEach(t => {
+          if (t.date && t.date.substring(0, 7) === mKey) {
+            const isReserve = t.isReserve || Boolean(t.reserveCategory);
+            if (t.pointage && !isReserve) {
+              balance += (t.versement - t.retrait);
+            }
+          }
+        });
+      });
+
+      return balance;
+    }
+
     function render() {
       const tableBody = document.getElementById('table-body');
       const summaryBar = document.getElementById('summary-bar');
@@ -690,22 +734,18 @@
       });
 
       if (currentPage === 'page1') {
-        // --- CALCUL DIRECT : SOLDE DE FIN DE TOUTES LES OPÉRATIONS AVANT LE MOIS SÉLECTIONNÉ ---
+        // --- NOUVEAU REPORT : On va chercher la fin exacte du mois précédent ---
         let soldeInitialReporte = 0;
         if (selectedMonth !== 'ALL') {
-          const sortedAllOps = [...data.page1].sort((a, b) => new Date(a.date) - new Date(b.date));
-          sortedAllOps.forEach(t => {
-            if (t.date && t.date.substring(0, 7) < selectedMonth) {
-              const delta = t.versement - t.retrait;
-              const isReserve = t.isReserve || Boolean(t.reserveCategory);
-              if (t.pointage && !isReserve) {
-                soldeInitialReporte += delta;
-              }
-            }
-          });
+          // Trouver le mois précédent
+          const [yr, mn] = selectedMonth.split('-').map(Number);
+          const prevDate = new Date(yr, mn - 2, 1); // Mois précédent
+          const prevMonthKey = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
+          
+          soldeInitialReporte = getCompteCourantBalanceAtMonth(prevMonthKey);
         }
 
-        // On démarre le solde courant du mois avec ce report + les charges fixes de ce mois
+        // On démarre le solde courant du mois avec ce report propre + les charges fixes de ce mois
         let runningCompteCourant = soldeInitialReporte + chargesFixesPointesCompte;
 
         // Affichage de la ligne de report
@@ -713,7 +753,7 @@
           <tr>
             <td style="color: var(--text-muted)">-</td>
             <td style="color: var(--text-muted)">-</td>
-            <td><strong>Solde initial (Report dernière ligne mois précédent)</strong></td>
+            <td><strong>Solde initial (Report fin mois précédent)</strong></td>
             <td class="amount">-</td>
             <td class="amount">-</td>
             <td class="amount ${soldeInitialReporte < 0 ? 'negative' : ''}"><strong>${soldeInitialReporte.toFixed(2)} €</strong></td>

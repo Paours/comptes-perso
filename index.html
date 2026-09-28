@@ -64,7 +64,16 @@
       color: var(--text-muted);
     }
 
-    .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+    .tabs-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .tabs { display: flex; gap: 10px; }
 
     .tab-btn {
       background: var(--card-bg);
@@ -82,6 +91,28 @@
       background: var(--accent);
       color: white;
       border-color: var(--accent);
+    }
+
+    .filter-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .filter-container label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .filter-container select {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      cursor: pointer;
     }
 
     .card {
@@ -121,6 +152,23 @@
     }
 
     button[type="submit"]:hover { background: var(--accent-hover); }
+
+    .btn-reset-charges {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid var(--warning);
+      color: var(--warning);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-reset-charges:hover {
+      background: var(--warning);
+      color: #0f172a;
+    }
 
     .table-container {
       overflow-x: auto;
@@ -222,9 +270,20 @@
       </div>
     </header>
 
-    <div class="tabs">
-      <button id="btn-tab1" class="tab-btn active">Opérations</button>
-      <button id="btn-tab2" class="tab-btn">Charges Fixes</button>
+    <div class="tabs-bar">
+      <div class="tabs">
+        <button id="btn-tab1" class="tab-btn active">Opérations</button>
+        <button id="btn-tab2" class="tab-btn">Charges Fixes</button>
+      </div>
+
+      <div class="filter-container" id="month-filter-wrapper">
+        <label for="month-filter">Période :</label>
+        <select id="month-filter"></select>
+      </div>
+
+      <div class="filter-container" id="reset-charges-wrapper" style="display: none;">
+        <button id="btn-reset-charges" class="btn-reset-charges">↺ Réinitialiser le mois</button>
+      </div>
     </div>
 
     <div class="card">
@@ -294,13 +353,19 @@
     const userDbRef = db.ref('comptes_data_users/' + currentUserId);
 
     let currentPage = 'page1';
-    let data = { page1: [], page2: [], reservesCategories: ['Vacances', 'Noël'] };
+    let data = { page1: [], page2: [], reservesCategories: ['Vacances', 'Noël'], lastMonthCheck: '' };
+    let selectedMonth = 'current'; // 'current', 'ALL', ou 'YYYY-MM'
+
+    const now = new Date();
+    const currentYYYYMM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
     // Charger les données locales immédiatement
     const localBackup = localStorage.getItem('backup_data_' + currentUserId);
     if (localBackup) {
       try {
         data = JSON.parse(localBackup);
+        checkAutoMonthReset();
+        updateMonthFilterOptions();
         updateFormAndHead();
         render();
       } catch(e) {}
@@ -325,13 +390,25 @@
         data = {
           page1: Array.isArray(val.page1) ? val.page1 : [],
           page2: Array.isArray(val.page2) ? val.page2 : [],
-          reservesCategories: Array.isArray(val.reservesCategories) ? val.reservesCategories : ['Vacances', 'Noël']
+          reservesCategories: Array.isArray(val.reservesCategories) ? val.reservesCategories : ['Vacances', 'Noël'],
+          lastMonthCheck: val.lastMonthCheck || ''
         };
+        checkAutoMonthReset();
         localStorage.setItem('backup_data_' + currentUserId, JSON.stringify(data));
       }
+      updateMonthFilterOptions();
       updateFormAndHead();
       render();
     });
+
+    // Option A : Réinitialisation automatique au 1er du mois pour l'onglet Charges Fixes
+    function checkAutoMonthReset() {
+      if (data.lastMonthCheck !== currentYYYYMM) {
+        data.page2 = data.page2.map(t => ({ ...t, traite: false }));
+        data.lastMonthCheck = currentYYYYMM;
+        save();
+      }
+    }
 
     function cleanDataForFirebase(obj) {
       return JSON.parse(JSON.stringify(obj, (key, value) => value === undefined ? null : value));
@@ -350,12 +427,56 @@
       currentPage = page;
       document.getElementById('btn-tab1').classList.toggle('active', page === 'page1');
       document.getElementById('btn-tab2').classList.toggle('active', page === 'page2');
+      
+      document.getElementById('month-filter-wrapper').style.display = page === 'page1' ? 'flex' : 'none';
+      document.getElementById('reset-charges-wrapper').style.display = page === 'page2' ? 'flex' : 'none';
+
       updateFormAndHead();
       render();
     }
 
     document.getElementById('btn-tab1').addEventListener('click', () => switchPage('page1'));
     document.getElementById('btn-tab2').addEventListener('click', () => switchPage('page2'));
+
+    // Bouton de réinitialisation manuelle pour les Charges Fixes
+    document.getElementById('btn-reset-charges').addEventListener('click', () => {
+      if (confirm('Voulez-vous décocher toutes les cases "Traité" des charges fixes pour ce mois ?')) {
+        data.page2 = data.page2.map(t => ({ ...t, traite: false }));
+        save();
+      }
+    });
+
+    // Gestion du filtre par mois
+    const monthFilterSelect = document.getElementById('month-filter');
+    monthFilterSelect.addEventListener('change', (e) => {
+      selectedMonth = e.target.value;
+      render();
+    });
+
+    function updateMonthFilterOptions() {
+      const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+      const monthsSet = new Set();
+      
+      monthsSet.add(currentYYYYMM);
+
+      (data.page1 || []).forEach(t => {
+        if (t.date && t.date.length >= 7) {
+          monthsSet.add(t.date.substring(0, 7));
+        }
+      });
+
+      const sortedMonths = Array.from(monthsSet).sort().reverse();
+
+      let optionsHtml = '';
+      sortedMonths.forEach(mKey => {
+        const [year, month] = mKey.split('-');
+        const label = `${monthNames[parseInt(month, 10) - 1]} ${year}${mKey === currentYYYYMM ? ' (En cours)' : ''}`;
+        optionsHtml += `<option value="${mKey}" ${selectedMonth === mKey || (selectedMonth === 'current' && mKey === currentYYYYMM) ? 'selected' : ''}>${label}</option>`;
+      });
+
+      optionsHtml += `<option value="ALL" ${selectedMonth === 'ALL' ? 'selected' : ''}>-- Tous les mois --</option>`;
+      monthFilterSelect.innerHTML = optionsHtml;
+    }
 
     function attachReserveSelectHandler() {
       const selectReserve = document.getElementById('reserve-category');
@@ -487,6 +608,7 @@
       e.target.reset();
       const dateEl = document.getElementById('date');
       if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
+      updateMonthFilterOptions();
     });
 
     function formatDate(dateStr) {
@@ -555,11 +677,15 @@
 
         const sortedOps = [...data.page1].sort((a, b) => new Date(a.date) - new Date(b.date));
 
+        // Filtrage des opérations selon le mois choisi dans le filtre
+        const targetMonthKey = selectedMonth === 'current' ? currentYYYYMM : selectedMonth;
+
         sortedOps.forEach(t => {
           const delta = t.versement - t.retrait;
           const isReserve = t.isReserve || Boolean(t.reserveCategory);
           const category = t.reserveCategory || 'Réserve';
 
+          // Les cagnottes et soldes globaux se calculent sur TOUTES les opérations pointées
           if (t.pointage) {
             if (isReserve) {
               totalReserves += delta;
@@ -568,6 +694,12 @@
             } else {
               soldeCompte += delta;
             }
+          }
+
+          // Filtre d'affichage dans le tableau
+          const itemMonthKey = t.date ? t.date.substring(0, 7) : '';
+          if (targetMonthKey !== 'ALL' && itemMonthKey !== targetMonthKey) {
+            return; // Masquer l'opération si hors période sélectionnée
           }
 
           const row = document.createElement('tr');

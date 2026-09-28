@@ -690,7 +690,7 @@
       });
 
       if (currentPage === 'page1') {
-        // --- REPORT DE FIN DE MOIS DU MOIS PRÉCÉDENT (Onglet 1 uniquement) ---
+        // --- CALCUL DIRECT : SOLDE DE FIN DE TOUTES LES OPÉRATIONS AVANT LE MOIS SÉLECTIONNÉ ---
         let soldeInitialReporte = 0;
         if (selectedMonth !== 'ALL') {
           const sortedAllOps = [...data.page1].sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -705,13 +705,15 @@
           });
         }
 
+        // On démarre le solde courant du mois avec ce report + les charges fixes de ce mois
         let runningCompteCourant = soldeInitialReporte + chargesFixesPointesCompte;
 
+        // Affichage de la ligne de report
         tableBody.innerHTML += `
           <tr>
             <td style="color: var(--text-muted)">-</td>
             <td style="color: var(--text-muted)">-</td>
-            <td><strong>Solde initial (Report mois précédent)</strong></td>
+            <td><strong>Solde initial (Report dernière ligne mois précédent)</strong></td>
             <td class="amount">-</td>
             <td class="amount">-</td>
             <td class="amount ${soldeInitialReporte < 0 ? 'negative' : ''}"><strong>${soldeInitialReporte.toFixed(2)} €</strong></td>

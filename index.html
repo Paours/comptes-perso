@@ -359,7 +359,6 @@
     const currentYYYYMM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     let selectedMonth = currentYYYYMM;
 
-    // Charger les données locales immédiatement
     const localBackup = localStorage.getItem('backup_data_' + currentUserId);
     if (localBackup) {
       try {
@@ -371,7 +370,6 @@
       } catch(e) {}
     }
 
-    // Suivi de l'état de connexion Firebase
     db.ref('.info/connected').on('value', (snap) => {
       const statusEl = document.getElementById('status-badge');
       if (snap.val() === true) {
@@ -383,7 +381,6 @@
       }
     });
 
-    // Écoute des données Firebase
     userDbRef.on('value', (snapshot) => {
       const val = snapshot.val();
       if (val) {
@@ -400,7 +397,6 @@
       render();
     });
 
-    // Renvoie l'état des cases "Inclus" et "Traité" pour une charge donnée et un mois donné
     function getChargeState(chargeId, monthKey) {
       const activeMonth = monthKey === 'ALL' ? currentYYYYMM : monthKey;
       if (data.monthlyChargesState && data.monthlyChargesState[activeMonth] && data.monthlyChargesState[activeMonth][chargeId]) {
@@ -472,7 +468,6 @@
       
       monthsSet.add(currentYYYYMM);
 
-      // Calcul du mois suivant pour préparation anticipée
       const [curY, curM] = currentYYYYMM.split('-').map(Number);
       const nextDate = new Date(curY, curM, 1);
       const nextYYYYMM = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}`;
@@ -663,7 +658,6 @@
 
       const activeMonth = selectedMonth === 'ALL' ? currentYYYYMM : selectedMonth;
 
-      // Calcul des charges fixes pointées pour le mois sélectionné
       let chargesFixesPointes = 0;
 
       data.page2.forEach(t => {
@@ -730,7 +724,6 @@
             }
           }
 
-          // Filtrage selon le mois sélectionné
           const itemMonthKey = t.date ? t.date.substring(0, 7) : '';
           if (selectedMonth !== 'ALL' && itemMonthKey !== selectedMonth) {
             return;

@@ -775,7 +775,7 @@
         sortedOps.forEach(t => {
           const itemMonthKey = t.date ? t.date.substring(0, 7) : '';
           const isReserve = t.isReserve || Boolean(t.reserveCategory);
-          if (t.pointage && !isReserve && (selectedMonth === 'ALL' || itemMonthKey === selectedMonth)) {
+          if (t.pointage && !isReserve && itemMonthKey === selectedMonth) {
             totalCompteCourantFinal += (t.versement - t.retrait);
           }
         });

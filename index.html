@@ -197,14 +197,30 @@
       accent-color: var(--accent);
       cursor: pointer;
     }
+
+    #restore-btn {
+      background: transparent;
+      border: 1px solid var(--warning);
+      color: var(--warning);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
   </style>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 <body>
 
   <div class="container">
     <header>
       <h1>Mes Comptes</h1>
-      <div id="user-badge">Chargement...</div>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <button id="restore-btn" title="Tenter de récupérer les données enregistrées localement">Récupérer copie locale</button>
+        <div id="user-badge">Chargement...</div>
+      </div>
     </header>
 
     <div class="tabs">
@@ -231,10 +247,7 @@
     <div id="summary-bar" class="summary-bar"></div>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
+  <script>
     function getUserKey() {
       const urlParams = new URLSearchParams(window.location.search);
       let userParam = urlParams.get('user');
@@ -262,10 +275,7 @@
 
     const currentUserId = getUserKey();
 
-    const userBadgeEl = document.getElementById('user-badge');
-    if (userBadgeEl) {
-      userBadgeEl.innerHTML = `Clé : <strong style="color:var(--text-main); margin-left:4px;">${currentUserId}</strong>`;
-    }
+    document.getElementById('user-badge').innerHTML = `Clé : <strong style="color:var(--text-main); margin-left:4px;">${currentUserId}</strong>`;
 
     const firebaseConfig = {
       apiKey: "AIzaSyCHh9JL1E3Trgxv-XGdoCyR8Ay8SIWepBo",
@@ -277,27 +287,46 @@
       appId: "1:364718028394:web:0ab4cc30259b4fe477fc13"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const userDbRef = ref(db, 'comptes_data_users/' + currentUserId);
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const userDbRef = db.ref('comptes_data_users/' + currentUserId);
 
     let currentPage = 'page1';
     let data = { page1: [], page2: [], reservesCategories: ['Vacances', 'Noël'] };
 
-    onValue(userDbRef, (snapshot) => {
+    userDbRef.on('value', (snapshot) => {
       const val = snapshot.val();
-      data = val ? { 
-        page1: val.page1 || [], 
-        page2: val.page2 || [],
-        reservesCategories: val.reservesCategories || ['Vacances', 'Noël']
-      } : { page1: [], page2: [], reservesCategories: ['Vacances', 'Noël'] };
-      
+      if (val) {
+        data = {
+          page1: val.page1 || [],
+          page2: val.page2 || [],
+          reservesCategories: val.reservesCategories || ['Vacances', 'Noël']
+        };
+        localStorage.setItem('backup_data_' + currentUserId, JSON.stringify(data));
+      } else {
+        const backup = localStorage.getItem('backup_data_' + currentUserId);
+        if (backup) {
+          try { data = JSON.parse(backup); } catch(e){}
+        }
+      }
       updateFormAndHead();
       render();
     });
 
+    document.getElementById('restore-btn').addEventListener('click', () => {
+      const backup = localStorage.getItem('backup_data_' + currentUserId) || localStorage.getItem('mes_comptes_backup_data');
+      if (backup) {
+        data = JSON.parse(backup);
+        save();
+        alert('Données locales restaurées avec succès !');
+      } else {
+        alert('Aucune sauvegarde locale trouvée dans ce navigateur.');
+      }
+    });
+
     function save() {
-      set(userDbRef, data);
+      userDbRef.set(data);
+      localStorage.setItem('backup_data_' + currentUserId, JSON.stringify(data));
     }
 
     function switchPage(page) {
@@ -335,11 +364,10 @@
     function updateFormAndHead() {
       const formFields = document.getElementById('form-fields');
       const tableHead = document.getElementById('table-head');
-      const optionsReserves = data.reservesCategories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+      const optionsReserves = (data.reservesCategories || ['Vacances', 'Noël']).map(cat => `<option value="${cat}">${cat}</option>`).join('');
 
       if (currentPage === 'page1') {
         const today = new Date().toISOString().split('T')[0];
-        
         formFields.innerHTML = `
           <input type="date" id="date" value="${today}" required>
           <input type="text" id="cheque" placeholder="Chèque (optionnel)">
@@ -352,7 +380,6 @@
             <option value="__new__">+ Créer une nouvelle réserve...</option>
           </select>
         `;
-
         attachReserveSelectHandler();
 
         tableHead.innerHTML = `
@@ -378,7 +405,6 @@
             <option value="__new__">+ Créer une nouvelle réserve...</option>
           </select>
         `;
-
         attachReserveSelectHandler();
 
         tableHead.innerHTML = `
@@ -391,7 +417,7 @@
           </th>
           <th class="center">Action</th>
         `;
-        
+
         const toggleAll = document.getElementById('toggle-all-charges');
         if (toggleAll) {
           toggleAll.addEventListener('change', (e) => {
@@ -425,7 +451,7 @@
 
       data[currentPage].push(newEntry);
       save();
-      
+
       e.target.reset();
       const dateEl = document.getElementById('date');
       if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
@@ -441,14 +467,13 @@
       const tableBody = document.getElementById('table-body');
       const summaryBar = document.getElementById('summary-bar');
       tableBody.innerHTML = '';
-      
+
       let soldeCompte = 0;
       let totalReserves = 0;
       const soldesParReserve = {};
-      
-      data.reservesCategories.forEach(cat => soldesParReserve[cat] = 0);
 
-      // Calcul des impacts issus des Charges Fixes (Page 2) pointées
+      (data.reservesCategories || ['Vacances', 'Noël']).forEach(cat => soldesParReserve[cat] = 0);
+
       let chargesFixesImpactCompte = 0;
 
       data.page2.filter(t => t.pointage).forEach(t => {
@@ -457,15 +482,11 @@
         const category = t.reserveCategory || 'Réserve';
 
         if (isReserve) {
-          // L'argent va dans la réserve
           totalReserves += delta;
           if (!soldesParReserve[category]) soldesParReserve[category] = 0;
           soldesParReserve[category] += delta;
-          
-          // Et est DÉBITÉ du compte courant
           chargesFixesImpactCompte -= delta;
         } else {
-          // Impact direct sur le compte courant
           chargesFixesImpactCompte += delta;
         }
       });
@@ -509,11 +530,9 @@
 
           if (t.pointage) {
             if (isReserve) {
-              // Ajout à la réserve
               totalReserves += delta;
               if (!soldesParReserve[category]) soldesParReserve[category] = 0;
               soldesParReserve[category] += delta;
-              // Retrait du compte courant
               soldeCompte -= delta;
             } else {
               soldeCompte += delta;

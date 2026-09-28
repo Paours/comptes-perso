@@ -296,7 +296,7 @@
     let currentPage = 'page1';
     let data = { page1: [], page2: [], reservesCategories: ['Vacances', 'Noël'] };
 
-    // Charger les données locales immédiatement pour éviter tout écran blanc
+    // Charger les données locales immédiatement
     const localBackup = localStorage.getItem('backup_data_' + currentUserId);
     if (localBackup) {
       try {
@@ -406,7 +406,7 @@
           <th>Libellé</th>
           <th class="amount">Retrait</th>
           <th class="amount">Versement</th>
-          <th class="amount">Solde Total</th>
+          <th class="amount">Solde Compte</th>
           <th class="center">Pointé</th>
           <th class="center">Action</th>
         `;
@@ -492,7 +492,8 @@
 
       (data.reservesCategories || ['Vacances', 'Noël']).forEach(cat => soldesParReserve[cat] = 0);
 
-      let chargesFixesImpactCompte = 0;
+      // Calcul préalable des charges fixes pointées
+      let chargesFixesPointes = 0;
 
       data.page2.filter(t => t.pointage).forEach(t => {
         const delta = t.versement - t.retrait;
@@ -503,9 +504,8 @@
           totalReserves += delta;
           if (!soldesParReserve[category]) soldesParReserve[category] = 0;
           soldesParReserve[category] += delta;
-          chargesFixesImpactCompte -= delta;
         } else {
-          chargesFixesImpactCompte += delta;
+          chargesFixesPointes += delta;
         }
       });
 
@@ -524,14 +524,14 @@
         `;
 
         if (data.page2.length > 0) {
-          soldeCompte += chargesFixesImpactCompte;
+          soldeCompte += chargesFixesPointes;
           tableBody.innerHTML += `
             <tr class="row-charges-total">
               <td style="color: var(--text-muted)">—</td>
               <td style="color: var(--text-muted)">—</td>
               <td><strong style="color: #f59e0b;">Charges Fixes Pointées (Feuille 2)</strong></td>
-              <td class="amount">${chargesFixesImpactCompte < 0 ? '<span class="amount-minus">' + chargesFixesImpactCompte.toFixed(2) + ' €</span>' : '-'}</td>
-              <td class="amount">${chargesFixesImpactCompte > 0 ? '<span class="amount-plus">+' + chargesFixesImpactCompte.toFixed(2) + ' €</span>' : '-'}</td>
+              <td class="amount">${chargesFixesPointes < 0 ? '<span class="amount-minus">' + chargesFixesPointes.toFixed(2) + ' €</span>' : '-'}</td>
+              <td class="amount">${chargesFixesPointes > 0 ? '<span class="amount-plus">+' + chargesFixesPointes.toFixed(2) + ' €</span>' : '-'}</td>
               <td class="amount ${soldeCompte < 0 ? 'negative' : ''}">${soldeCompte.toFixed(2)} €</td>
               <td class="center">-</td>
               <td></td>
@@ -551,13 +551,11 @@
               totalReserves += delta;
               if (!soldesParReserve[category]) soldesParReserve[category] = 0;
               soldesParReserve[category] += delta;
-              soldeCompte -= delta;
             } else {
               soldeCompte += delta;
             }
           }
 
-          const currentTotal = soldeCompte + totalReserves;
           const row = document.createElement('tr');
           if (isReserve) row.classList.add('row-reserve');
 
@@ -567,7 +565,7 @@
             <td>${isReserve ? `<span class="tag-reserve">${category}</span>` : ''} <strong>${t.ordre}</strong></td>
             <td class="amount">${t.retrait > 0 ? '<span class="amount-minus">-' + t.retrait.toFixed(2) + ' €</span>' : ''}</td>
             <td class="amount">${t.versement > 0 ? '<span class="amount-plus">+' + t.versement.toFixed(2) + ' €</span>' : ''}</td>
-            <td class="amount ${currentTotal < 0 ? 'negative' : ''}">${currentTotal.toFixed(2)} €</td>
+            <td class="amount ${soldeCompte < 0 ? 'negative' : ''}">${soldeCompte.toFixed(2)} €</td>
             <td class="center">
               <input type="checkbox" class="chk-pointage" data-id="${t.id}" ${t.pointage ? 'checked' : ''}>
             </td>

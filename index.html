@@ -354,10 +354,10 @@
 
     let currentPage = 'page1';
     let data = { page1: [], page2: [], reservesCategories: ['Vacances', 'Noël'], lastMonthCheck: '' };
-    let selectedMonth = 'current'; // 'current', 'ALL', ou 'YYYY-MM'
 
     const now = new Date();
     const currentYYYYMM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    let selectedMonth = currentYYYYMM;
 
     // Charger les données locales immédiatement
     const localBackup = localStorage.getItem('backup_data_' + currentUserId);
@@ -401,7 +401,6 @@
       render();
     });
 
-    // Option A : Réinitialisation automatique au 1er du mois pour l'onglet Charges Fixes
     function checkAutoMonthReset() {
       if (data.lastMonthCheck !== currentYYYYMM) {
         data.page2 = data.page2.map(t => ({ ...t, traite: false }));
@@ -438,7 +437,6 @@
     document.getElementById('btn-tab1').addEventListener('click', () => switchPage('page1'));
     document.getElementById('btn-tab2').addEventListener('click', () => switchPage('page2'));
 
-    // Bouton de réinitialisation manuelle pour les Charges Fixes
     document.getElementById('btn-reset-charges').addEventListener('click', () => {
       if (confirm('Voulez-vous décocher toutes les cases "Traité" des charges fixes pour ce mois ?')) {
         data.page2 = data.page2.map(t => ({ ...t, traite: false }));
@@ -446,7 +444,6 @@
       }
     });
 
-    // Gestion du filtre par mois
     const monthFilterSelect = document.getElementById('month-filter');
     monthFilterSelect.addEventListener('change', (e) => {
       selectedMonth = e.target.value;
@@ -457,8 +454,10 @@
       const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
       const monthsSet = new Set();
       
+      // Toujours inclure le mois en cours
       monthsSet.add(currentYYYYMM);
 
+      // Ajouter tous les mois présents dans les opérations
       (data.page1 || []).forEach(t => {
         if (t.date && t.date.length >= 7) {
           monthsSet.add(t.date.substring(0, 7));
@@ -470,8 +469,10 @@
       let optionsHtml = '';
       sortedMonths.forEach(mKey => {
         const [year, month] = mKey.split('-');
-        const label = `${monthNames[parseInt(month, 10) - 1]} ${year}${mKey === currentYYYYMM ? ' (En cours)' : ''}`;
-        optionsHtml += `<option value="${mKey}" ${selectedMonth === mKey || (selectedMonth === 'current' && mKey === currentYYYYMM) ? 'selected' : ''}>${label}</option>`;
+        const monthIndex = parseInt(month, 10) - 1;
+        const name = monthNames[monthIndex] || month;
+        const label = `${name} ${year}${mKey === currentYYYYMM ? ' (En cours)' : ''}`;
+        optionsHtml += `<option value="${mKey}" ${selectedMonth === mKey ? 'selected' : ''}>${label}</option>`;
       });
 
       optionsHtml += `<option value="ALL" ${selectedMonth === 'ALL' ? 'selected' : ''}>-- Tous les mois --</option>`;
@@ -677,15 +678,11 @@
 
         const sortedOps = [...data.page1].sort((a, b) => new Date(a.date) - new Date(b.date));
 
-        // Filtrage des opérations selon le mois choisi dans le filtre
-        const targetMonthKey = selectedMonth === 'current' ? currentYYYYMM : selectedMonth;
-
         sortedOps.forEach(t => {
           const delta = t.versement - t.retrait;
           const isReserve = t.isReserve || Boolean(t.reserveCategory);
           const category = t.reserveCategory || 'Réserve';
 
-          // Les cagnottes et soldes globaux se calculent sur TOUTES les opérations pointées
           if (t.pointage) {
             if (isReserve) {
               totalReserves += delta;
@@ -696,10 +693,10 @@
             }
           }
 
-          // Filtre d'affichage dans le tableau
+          // Filtrage selon le mois sélectionné
           const itemMonthKey = t.date ? t.date.substring(0, 7) : '';
-          if (targetMonthKey !== 'ALL' && itemMonthKey !== targetMonthKey) {
-            return; // Masquer l'opération si hors période sélectionnée
+          if (selectedMonth !== 'ALL' && itemMonthKey !== selectedMonth) {
+            return;
           }
 
           const row = document.createElement('tr');
@@ -820,6 +817,7 @@
       });
     }
 
+    updateMonthFilterOptions();
     updateFormAndHead();
   </script>
 </body>

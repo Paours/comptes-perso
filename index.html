@@ -690,7 +690,7 @@
       });
 
       if (currentPage === 'page1') {
-        // --- REPORT EXACT DU MOIS PRÉCÉDENT (Somme de toutes les opérations des mois antérieurs) ---
+        // --- CALCUL STRICT DU REPORT DU MOIS PRÉCÉDENT ---
         let soldeInitialReporte = 0;
         if (selectedMonth !== 'ALL') {
           const sortedAllOps = [...data.page1].sort((a, b) => new Date(a.date) - new Date(b.date));

@@ -43,6 +43,13 @@
 
     h1 { font-size: 1.8rem; font-weight: 700; }
 
+    .badge-container {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+    }
+
     #user-badge {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
@@ -50,9 +57,11 @@
       border-radius: 20px;
       font-size: 0.85rem;
       color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    }
+
+    #status-badge {
+      font-size: 0.75rem;
+      color: var(--text-muted);
     }
 
     .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
@@ -197,16 +206,6 @@
       accent-color: var(--accent);
       cursor: pointer;
     }
-
-    #restore-btn {
-      background: transparent;
-      border: 1px solid var(--warning);
-      color: var(--warning);
-      padding: 4px 10px;
-      border-radius: 6px;
-      font-size: 0.8rem;
-      cursor: pointer;
-    }
   </style>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -217,9 +216,9 @@
   <div class="container">
     <header>
       <h1>Mes Comptes</h1>
-      <div style="display:flex; gap:10px; align-items:center;">
-        <button id="restore-btn" title="Tenter de récupérer les données enregistrées localement">Récupérer copie locale</button>
+      <div class="badge-container">
         <div id="user-badge">Chargement...</div>
+        <div id="status-badge">🟡 Connexion en cours...</div>
       </div>
     </header>
 
@@ -287,46 +286,64 @@
       appId: "1:364718028394:web:0ab4cc30259b4fe477fc13"
     };
 
-    firebase.initializeApp(firebaseConfig);
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    
     const db = firebase.database();
     const userDbRef = db.ref('comptes_data_users/' + currentUserId);
 
     let currentPage = 'page1';
     let data = { page1: [], page2: [], reservesCategories: ['Vacances', 'Noël'] };
 
+    // Charger les données locales immédiatement pour éviter tout écran blanc
+    const localBackup = localStorage.getItem('backup_data_' + currentUserId);
+    if (localBackup) {
+      try {
+        data = JSON.parse(localBackup);
+        updateFormAndHead();
+        render();
+      } catch(e) {}
+    }
+
+    // Suivi de l'état de connexion Firebase
+    db.ref('.info/connected').on('value', (snap) => {
+      const statusEl = document.getElementById('status-badge');
+      if (snap.val() === true) {
+        statusEl.innerHTML = '🟢 Connecté';
+        statusEl.style.color = 'var(--success)';
+      } else {
+        statusEl.innerHTML = '🔴 Hors ligne (Mode local)';
+        statusEl.style.color = 'var(--danger)';
+      }
+    });
+
+    // Écoute des données Firebase
     userDbRef.on('value', (snapshot) => {
       const val = snapshot.val();
       if (val) {
         data = {
-          page1: val.page1 || [],
-          page2: val.page2 || [],
-          reservesCategories: val.reservesCategories || ['Vacances', 'Noël']
+          page1: Array.isArray(val.page1) ? val.page1 : [],
+          page2: Array.isArray(val.page2) ? val.page2 : [],
+          reservesCategories: Array.isArray(val.reservesCategories) ? val.reservesCategories : ['Vacances', 'Noël']
         };
         localStorage.setItem('backup_data_' + currentUserId, JSON.stringify(data));
-      } else {
-        const backup = localStorage.getItem('backup_data_' + currentUserId);
-        if (backup) {
-          try { data = JSON.parse(backup); } catch(e){}
-        }
       }
       updateFormAndHead();
       render();
     });
 
-    document.getElementById('restore-btn').addEventListener('click', () => {
-      const backup = localStorage.getItem('backup_data_' + currentUserId) || localStorage.getItem('mes_comptes_backup_data');
-      if (backup) {
-        data = JSON.parse(backup);
-        save();
-        alert('Données locales restaurées avec succès !');
-      } else {
-        alert('Aucune sauvegarde locale trouvée dans ce navigateur.');
-      }
-    });
+    function cleanDataForFirebase(obj) {
+      return JSON.parse(JSON.stringify(obj, (key, value) => value === undefined ? null : value));
+    }
 
     function save() {
-      userDbRef.set(data);
-      localStorage.setItem('backup_data_' + currentUserId, JSON.stringify(data));
+      const cleanData = cleanDataForFirebase(data);
+      localStorage.setItem('backup_data_' + currentUserId, JSON.stringify(cleanData));
+      userDbRef.set(cleanData).catch(err => {
+        console.error("Erreur de sauvegarde Firebase : ", err);
+      });
+      render();
     }
 
     function switchPage(page) {
@@ -364,7 +381,8 @@
     function updateFormAndHead() {
       const formFields = document.getElementById('form-fields');
       const tableHead = document.getElementById('table-head');
-      const optionsReserves = (data.reservesCategories || ['Vacances', 'Noël']).map(cat => `<option value="${cat}">${cat}</option>`).join('');
+      const categories = data.reservesCategories || ['Vacances', 'Noël'];
+      const optionsReserves = categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
 
       if (currentPage === 'page1') {
         const today = new Date().toISOString().split('T')[0];
@@ -436,17 +454,17 @@
 
       const newEntry = {
         id: Date.now(),
-        cheque: document.getElementById('cheque').value,
-        ordre: document.getElementById('ordre').value,
+        cheque: document.getElementById('cheque').value || '',
+        ordre: document.getElementById('ordre').value || '',
         retrait: parseFloat(document.getElementById('retrait').value) || 0,
         versement: parseFloat(document.getElementById('versement').value) || 0,
         pointage: false,
         isReserve: isReserve,
-        reserveCategory: isReserve ? reserveCat : null
+        reserveCategory: isReserve ? reserveCat : ''
       };
 
       if (currentPage === 'page1') {
-        newEntry.date = document.getElementById('date').value;
+        newEntry.date = document.getElementById('date').value || new Date().toISOString().split('T')[0];
       }
 
       data[currentPage].push(newEntry);

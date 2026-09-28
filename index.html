@@ -656,7 +656,7 @@
       const soldesParReserve = {};
       (data.reservesCategories || ['Vacances', 'Noël']).forEach(cat => soldesParReserve[cat] = 0);
 
-      // Calcul global des réserves (toutes dates confondues)
+      // Calcul global des réserves (toutes dates)
       (data.page1 || []).filter(t => t.pointage).forEach(t => {
         const isReserve = t.isReserve || Boolean(t.reserveCategory);
         if (isReserve) {
@@ -670,7 +670,7 @@
 
       const activeMonth = selectedMonth === 'ALL' ? currentYYYYMM : selectedMonth;
 
-      // Calcul des charges fixes pointées de l'onglet 2 pour le mois actif
+      // Calcul des charges fixes pointées de l'onglet 2 pour le mois actif uniquement
       let chargesFixesPointesCompte = 0;
       data.page2.forEach(t => {
         const cState = getChargeState(t.id, activeMonth);
@@ -690,12 +690,10 @@
       });
 
       if (currentPage === 'page1') {
-        // --- CALCUL DU REPORT DU MOIS PRÉCÉDENT ---
+        // --- CALCUL DU VRAI REPORT DU MOIS PRÉCÉDENT (UNIQUEMENT LES OPÉRATIONS DE L'ONGLET 1) ---
         let soldeInitialReporte = 0;
         if (selectedMonth !== 'ALL') {
-          // Trouver toutes les opérations des mois STRICTEMENT ANTÉRIEURS au mois sélectionné
           const sortedAllOps = [...data.page1].sort((a, b) => new Date(a.date) - new Date(b.date));
-          
           sortedAllOps.forEach(t => {
             if (t.date && t.date.substring(0, 7) < selectedMonth) {
               const delta = t.versement - t.retrait;
@@ -705,7 +703,6 @@
               }
             }
           });
-          // On ajoute aussi l'impact des charges fixes des mois antérieurs si besoin, ou on laisse le cumul s'opérer
         }
 
         let runningCompteCourant = soldeInitialReporte + chargesFixesPointesCompte;
@@ -742,26 +739,16 @@
 
         sortedOps.forEach(t => {
           const itemMonthKey = t.date ? t.date.substring(0, 7) : '';
-          
-          // Si on filtre par mois, on n'affiche dans le tableau que les opérations de ce mois
           const matchesMonth = (selectedMonth === 'ALL' || itemMonthKey === selectedMonth);
 
           const delta = t.versement - t.retrait;
           const isReserve = t.isReserve || Boolean(t.reserveCategory);
 
-          // Le solde global du compte prend en compte TOUTES les opérations passées jusqu'à ce mois-ci
-          if (t.pointage && !isReserve) {
-            if (selectedMonth === 'ALL' || itemMonthKey <= selectedMonth) {
-              // Évite de compter deux fois si l'opération est dans le mois courant
-              // (Le runingCompteCourant intègre déjà le report + charges fixes)
-            }
+          if (t.pointage && !isReserve && itemMonthKey === selectedMonth) {
+            runningCompteCourant += delta;
           }
 
           if (!matchesMonth) return;
-
-          if (t.pointage && !isReserve) {
-            runningCompteCourant += delta;
-          }
 
           const row = document.createElement('tr');
           if (isReserve) row.classList.add('row-reserve');
@@ -783,7 +770,17 @@
           tableBody.appendChild(row);
         });
 
-        const soldeTotalGlobal = runningCompteCourant + totalReserves;
+        // Calcul final exact pour l'encart en bas
+        let totalCompteCourantFinal = soldeInitialReporte + chargesFixesPointesCompte;
+        sortedOps.forEach(t => {
+          const itemMonthKey = t.date ? t.date.substring(0, 7) : '';
+          const isReserve = t.isReserve || Boolean(t.reserveCategory);
+          if (t.pointage && !isReserve && (selectedMonth === 'ALL' || itemMonthKey === selectedMonth)) {
+            totalCompteCourantFinal += (t.versement - t.retrait);
+          }
+        });
+
+        const soldeTotalGlobal = totalCompteCourantFinal + totalReserves;
 
         let reservesCardsHtml = '';
         Object.entries(soldesParReserve).forEach(([cat, solde]) => {
@@ -798,7 +795,7 @@
         summaryBar.innerHTML = `
           <div class="summary-card">
             <div class="summary-title">Solde Compte Courant</div>
-            <div class="summary-val ${runningCompteCourant < 0 ? 'negative' : ''}">${runningCompteCourant.toFixed(2)} €</div>
+            <div class="summary-val ${totalCompteCourantFinal < 0 ? 'negative' : ''}">${totalCompteCourantFinal.toFixed(2)} €</div>
           </div>
           ${reservesCardsHtml}
           <div class="summary-card">

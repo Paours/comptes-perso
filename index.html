@@ -281,7 +281,7 @@
         <select id="month-filter"></select>
       </div>
 
-      <div class="filter-container" id="reset-charges-wrapper">
+      <div class="filter-container" id="reset-charges-wrapper" style="display: none;">
         <button id="btn-reset-charges" class="btn-reset-charges">↺ Réinitialiser l'état du mois</button>
       </div>
     </div>
@@ -437,6 +437,8 @@
       document.getElementById('btn-tab1').classList.toggle('active', page === 'page1');
       document.getElementById('btn-tab2').classList.toggle('active', page === 'page2');
       
+      document.getElementById('reset-charges-wrapper').style.display = page === 'page2' ? 'flex' : 'none';
+
       updateFormAndHead();
       render();
     }
@@ -650,15 +652,13 @@
       const summaryBar = document.getElementById('summary-bar');
       tableBody.innerHTML = '';
 
-      let soldeCompte = 0;
       let totalReserves = 0;
       const soldesParReserve = {};
-
       (data.reservesCategories || ['Vacances', 'Noël']).forEach(cat => soldesParReserve[cat] = 0);
 
       const activeMonth = selectedMonth === 'ALL' ? currentYYYYMM : selectedMonth;
 
-      let chargesFixesPointes = 0;
+      let chargesFixesPointesCompte = 0;
 
       data.page2.forEach(t => {
         const cState = getChargeState(t.id, activeMonth);
@@ -672,12 +672,14 @@
             if (!soldesParReserve[category]) soldesParReserve[category] = 0;
             soldesParReserve[category] += delta;
           } else {
-            chargesFixesPointes += delta;
+            chargesFixesPointesCompte += delta;
           }
         }
       });
 
       if (currentPage === 'page1') {
+        let soldeCompteCourant = chargesFixesPointesCompte;
+
         tableBody.innerHTML += `
           <tr>
             <td style="color: var(--text-muted)">-</td>
@@ -692,15 +694,14 @@
         `;
 
         if (data.page2.length > 0) {
-          soldeCompte += chargesFixesPointes;
           tableBody.innerHTML += `
             <tr class="row-charges-total">
               <td style="color: var(--text-muted)">—</td>
               <td style="color: var(--text-muted)">—</td>
               <td><strong style="color: #f59e0b;">Charges Fixes Pointées (Feuille 2)</strong></td>
-              <td class="amount">${chargesFixesPointes < 0 ? '<span class="amount-minus">' + chargesFixesPointes.toFixed(2) + ' €</span>' : '-'}</td>
-              <td class="amount">${chargesFixesPointes > 0 ? '<span class="amount-plus">+' + chargesFixesPointes.toFixed(2) + ' €</span>' : '-'}</td>
-              <td class="amount ${soldeCompte < 0 ? 'negative' : ''}">${soldeCompte.toFixed(2)} €</td>
+              <td class="amount">${chargesFixesPointesCompte < 0 ? '<span class="amount-minus">' + chargesFixesPointesCompte.toFixed(2) + ' €</span>' : '-'}</td>
+              <td class="amount">${chargesFixesPointesCompte > 0 ? '<span class="amount-plus">+' + chargesFixesPointesCompte.toFixed(2) + ' €</span>' : '-'}</td>
+              <td class="amount ${soldeCompteCourant < 0 ? 'negative' : ''}">${soldeCompteCourant.toFixed(2)} €</td>
               <td class="center">-</td>
               <td></td>
             </tr>
@@ -719,8 +720,9 @@
               totalReserves += delta;
               if (!soldesParReserve[category]) soldesParReserve[category] = 0;
               soldesParReserve[category] += delta;
+              soldeCompteCourant -= delta;
             } else {
-              soldeCompte += delta;
+              soldeCompteCourant += delta;
             }
           }
 
@@ -738,7 +740,7 @@
             <td>${isReserve ? `<span class="tag-reserve">${category}</span>` : ''} <strong>${t.ordre}</strong></td>
             <td class="amount">${t.retrait > 0 ? '<span class="amount-minus">-' + t.retrait.toFixed(2) + ' €</span>' : ''}</td>
             <td class="amount">${t.versement > 0 ? '<span class="amount-plus">+' + t.versement.toFixed(2) + ' €</span>' : ''}</td>
-            <td class="amount ${soldeCompte < 0 ? 'negative' : ''}">${soldeCompte.toFixed(2)} €</td>
+            <td class="amount ${soldeCompteCourant < 0 ? 'negative' : ''}">${soldeCompteCourant.toFixed(2)} €</td>
             <td class="center">
               <input type="checkbox" class="chk-pointage" data-id="${t.id}" ${t.pointage ? 'checked' : ''}>
             </td>
@@ -749,7 +751,7 @@
           tableBody.appendChild(row);
         });
 
-        const soldeTotalGlobal = soldeCompte + totalReserves;
+        const soldeTotalGlobal = soldeCompteCourant + totalReserves;
 
         let reservesCardsHtml = '';
         Object.entries(soldesParReserve).forEach(([cat, solde]) => {
@@ -764,7 +766,7 @@
         summaryBar.innerHTML = `
           <div class="summary-card">
             <div class="summary-title">Solde Compte Courant</div>
-            <div class="summary-val ${soldeCompte < 0 ? 'negative' : ''}">${soldeCompte.toFixed(2)} €</div>
+            <div class="summary-val ${soldeCompteCourant < 0 ? 'negative' : ''}">${soldeCompteCourant.toFixed(2)} €</div>
           </div>
           ${reservesCardsHtml}
           <div class="summary-card">

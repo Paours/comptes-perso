@@ -281,8 +281,8 @@
         <select id="month-filter"></select>
       </div>
 
-      <div class="filter-container" id="reset-charges-wrapper" style="display: none;">
-        <button id="btn-reset-charges" class="btn-reset-charges">↺ Réinitialiser le mois</button>
+      <div class="filter-container" id="reset-charges-wrapper">
+        <button id="btn-reset-charges" class="btn-reset-charges">↺ Réinitialiser l'état du mois</button>
       </div>
     </div>
 
@@ -353,7 +353,7 @@
     const userDbRef = db.ref('comptes_data_users/' + currentUserId);
 
     let currentPage = 'page1';
-    let data = { page1: [], page2: [], reservesCategories: ['Vacances', 'Noël'], lastMonthCheck: '' };
+    let data = { page1: [], page2: [], monthlyChargesState: {}, reservesCategories: ['Vacances', 'Noël'] };
 
     const now = new Date();
     const currentYYYYMM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -364,7 +364,7 @@
     if (localBackup) {
       try {
         data = JSON.parse(localBackup);
-        checkAutoMonthReset();
+        if (!data.monthlyChargesState) data.monthlyChargesState = {};
         updateMonthFilterOptions();
         updateFormAndHead();
         render();
@@ -390,10 +390,9 @@
         data = {
           page1: Array.isArray(val.page1) ? val.page1 : [],
           page2: Array.isArray(val.page2) ? val.page2 : [],
-          reservesCategories: Array.isArray(val.reservesCategories) ? val.reservesCategories : ['Vacances', 'Noël'],
-          lastMonthCheck: val.lastMonthCheck || ''
+          monthlyChargesState: val.monthlyChargesState || {},
+          reservesCategories: Array.isArray(val.reservesCategories) ? val.reservesCategories : ['Vacances', 'Noël']
         };
-        checkAutoMonthReset();
         localStorage.setItem('backup_data_' + currentUserId, JSON.stringify(data));
       }
       updateMonthFilterOptions();
@@ -401,12 +400,27 @@
       render();
     });
 
-    function checkAutoMonthReset() {
-      if (data.lastMonthCheck !== currentYYYYMM) {
-        data.page2 = data.page2.map(t => ({ ...t, traite: false }));
-        data.lastMonthCheck = currentYYYYMM;
-        save();
+    // Renvoie l'état des cases "Inclus" et "Traité" pour une charge donnée et un mois donné
+    function getChargeState(chargeId, monthKey) {
+      const activeMonth = monthKey === 'ALL' ? currentYYYYMM : monthKey;
+      if (data.monthlyChargesState && data.monthlyChargesState[activeMonth] && data.monthlyChargesState[activeMonth][chargeId]) {
+        return data.monthlyChargesState[activeMonth][chargeId];
       }
+      const charge = (data.page2 || []).find(c => c.id === chargeId);
+      return {
+        pointage: charge ? Boolean(charge.pointage) : false,
+        traite: charge ? Boolean(charge.traite) : false
+      };
+    }
+
+    function setChargeState(chargeId, monthKey, key, value) {
+      const activeMonth = monthKey === 'ALL' ? currentYYYYMM : monthKey;
+      if (!data.monthlyChargesState) data.monthlyChargesState = {};
+      if (!data.monthlyChargesState[activeMonth]) data.monthlyChargesState[activeMonth] = {};
+      
+      const current = getChargeState(chargeId, activeMonth);
+      current[key] = value;
+      data.monthlyChargesState[activeMonth][chargeId] = current;
     }
 
     function cleanDataForFirebase(obj) {
@@ -427,9 +441,6 @@
       document.getElementById('btn-tab1').classList.toggle('active', page === 'page1');
       document.getElementById('btn-tab2').classList.toggle('active', page === 'page2');
       
-      document.getElementById('month-filter-wrapper').style.display = page === 'page1' ? 'flex' : 'none';
-      document.getElementById('reset-charges-wrapper').style.display = page === 'page2' ? 'flex' : 'none';
-
       updateFormAndHead();
       render();
     }
@@ -438,8 +449,13 @@
     document.getElementById('btn-tab2').addEventListener('click', () => switchPage('page2'));
 
     document.getElementById('btn-reset-charges').addEventListener('click', () => {
-      if (confirm('Voulez-vous décocher toutes les cases "Traité" des charges fixes pour ce mois ?')) {
-        data.page2 = data.page2.map(t => ({ ...t, traite: false }));
+      const activeMonth = selectedMonth === 'ALL' ? currentYYYYMM : selectedMonth;
+      if (confirm(`Voulez-vous réinitialiser les cases de l'onglet Charges Fixes pour le mois sélectionné (${activeMonth}) ?`)) {
+        if (!data.monthlyChargesState) data.monthlyChargesState = {};
+        data.monthlyChargesState[activeMonth] = {};
+        (data.page2 || []).forEach(t => {
+          data.monthlyChargesState[activeMonth][t.id] = { pointage: true, traite: false };
+        });
         save();
       }
     });
@@ -454,10 +470,14 @@
       const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
       const monthsSet = new Set();
       
-      // Toujours inclure le mois en cours
       monthsSet.add(currentYYYYMM);
 
-      // Ajouter tous les mois présents dans les opérations
+      // Calcul du mois suivant pour préparation anticipée
+      const [curY, curM] = currentYYYYMM.split('-').map(Number);
+      const nextDate = new Date(curY, curM, 1);
+      const nextYYYYMM = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}`;
+      monthsSet.add(nextYYYYMM);
+
       (data.page1 || []).forEach(t => {
         if (t.date && t.date.length >= 7) {
           monthsSet.add(t.date.substring(0, 7));
@@ -471,7 +491,11 @@
         const [year, month] = mKey.split('-');
         const monthIndex = parseInt(month, 10) - 1;
         const name = monthNames[monthIndex] || month;
-        const label = `${name} ${year}${mKey === currentYYYYMM ? ' (En cours)' : ''}`;
+        let suffix = '';
+        if (mKey === currentYYYYMM) suffix = ' (En cours)';
+        else if (mKey === nextYYYYMM) suffix = ' (Mois prochain)';
+        
+        const label = `${name} ${year}${suffix}`;
         optionsHtml += `<option value="${mKey}" ${selectedMonth === mKey ? 'selected' : ''}>${label}</option>`;
       });
 
@@ -533,8 +557,9 @@
           <th class="center">Action</th>
         `;
       } else {
-        const allChecked = data.page2.length > 0 && data.page2.every(t => t.pointage);
-        const allProcessed = data.page2.length > 0 && data.page2.every(t => t.traite);
+        const activeMonth = selectedMonth === 'ALL' ? currentYYYYMM : selectedMonth;
+        const allChecked = data.page2.length > 0 && data.page2.every(t => getChargeState(t.id, activeMonth).pointage);
+        const allProcessed = data.page2.length > 0 && data.page2.every(t => getChargeState(t.id, activeMonth).traite);
 
         formFields.innerHTML = `
           <input type="text" id="cheque" placeholder="Chèque (optionnel)">
@@ -566,7 +591,7 @@
         const toggleAll = document.getElementById('toggle-all-charges');
         if (toggleAll) {
           toggleAll.addEventListener('change', (e) => {
-            data.page2 = data.page2.map(t => ({ ...t, pointage: e.target.checked }));
+            data.page2.forEach(t => setChargeState(t.id, activeMonth, 'pointage', e.target.checked));
             save();
           });
         }
@@ -574,7 +599,7 @@
         const toggleAllTraite = document.getElementById('toggle-all-traite');
         if (toggleAllTraite) {
           toggleAllTraite.addEventListener('change', (e) => {
-            data.page2 = data.page2.map(t => ({ ...t, traite: e.target.checked }));
+            data.page2.forEach(t => setChargeState(t.id, activeMonth, 'traite', e.target.checked));
             save();
           });
         }
@@ -593,7 +618,7 @@
         ordre: document.getElementById('ordre').value || '',
         retrait: parseFloat(document.getElementById('retrait').value) || 0,
         versement: parseFloat(document.getElementById('versement').value) || 0,
-        pointage: false,
+        pointage: currentPage === 'page2' ? true : false,
         traite: false,
         isReserve: isReserve,
         reserveCategory: isReserve ? reserveCat : ''
@@ -604,6 +629,13 @@
       }
 
       data[currentPage].push(newEntry);
+      
+      if (currentPage === 'page2') {
+        const activeMonth = selectedMonth === 'ALL' ? currentYYYYMM : selectedMonth;
+        setChargeState(newEntry.id, activeMonth, 'pointage', true);
+        setChargeState(newEntry.id, activeMonth, 'traite', false);
+      }
+
       save();
 
       e.target.reset();
@@ -629,20 +661,25 @@
 
       (data.reservesCategories || ['Vacances', 'Noël']).forEach(cat => soldesParReserve[cat] = 0);
 
-      // Calcul préalable des charges fixes pointées
+      const activeMonth = selectedMonth === 'ALL' ? currentYYYYMM : selectedMonth;
+
+      // Calcul des charges fixes pointées pour le mois sélectionné
       let chargesFixesPointes = 0;
 
-      data.page2.filter(t => t.pointage).forEach(t => {
-        const delta = t.versement - t.retrait;
-        const isReserve = t.isReserve || Boolean(t.reserveCategory);
-        const category = t.reserveCategory || 'Réserve';
+      data.page2.forEach(t => {
+        const cState = getChargeState(t.id, activeMonth);
+        if (cState.pointage) {
+          const delta = t.versement - t.retrait;
+          const isReserve = t.isReserve || Boolean(t.reserveCategory);
+          const category = t.reserveCategory || 'Réserve';
 
-        if (isReserve) {
-          totalReserves += delta;
-          if (!soldesParReserve[category]) soldesParReserve[category] = 0;
-          soldesParReserve[category] += delta;
-        } else {
-          chargesFixesPointes += delta;
+          if (isReserve) {
+            totalReserves += delta;
+            if (!soldesParReserve[category]) soldesParReserve[category] = 0;
+            soldesParReserve[category] += delta;
+          } else {
+            chargesFixesPointes += delta;
+          }
         }
       });
 
@@ -749,6 +786,7 @@
 
       } else {
         data.page2.forEach(t => {
+          const cState = getChargeState(t.id, activeMonth);
           const isReserve = t.isReserve || Boolean(t.reserveCategory);
           const category = t.reserveCategory || 'Réserve';
           const row = document.createElement('tr');
@@ -760,10 +798,10 @@
             <td class="amount">${t.retrait > 0 ? '<span class="amount-minus">-' + t.retrait.toFixed(2) + ' €</span>' : '-'}</td>
             <td class="amount">${t.versement > 0 ? '<span class="amount-plus">+' + t.versement.toFixed(2) + ' €</span>' : '-'}</td>
             <td class="center">
-              <input type="checkbox" class="chk-pointage" data-id="${t.id}" ${t.pointage ? 'checked' : ''}>
+              <input type="checkbox" class="chk-pointage" data-id="${t.id}" ${cState.pointage ? 'checked' : ''}>
             </td>
             <td class="center">
-              <input type="checkbox" class="chk-traite" data-id="${t.id}" ${t.traite ? 'checked' : ''}>
+              <input type="checkbox" class="chk-traite" data-id="${t.id}" ${cState.traite ? 'checked' : ''}>
             </td>
             <td class="center">
               <button class="btn-del" data-id="${t.id}">✕</button>
@@ -795,7 +833,11 @@
       document.querySelectorAll('.chk-pointage').forEach(chk => {
         chk.addEventListener('change', (e) => {
           const id = Number(e.target.dataset.id);
-          data[currentPage] = data[currentPage].map(t => t.id === id ? { ...t, pointage: e.target.checked } : t);
+          if (currentPage === 'page1') {
+            data.page1 = data.page1.map(t => t.id === id ? { ...t, pointage: e.target.checked } : t);
+          } else {
+            setChargeState(id, activeMonth, 'pointage', e.target.checked);
+          }
           save();
         });
       });
@@ -803,7 +845,7 @@
       document.querySelectorAll('.chk-traite').forEach(chk => {
         chk.addEventListener('change', (e) => {
           const id = Number(e.target.dataset.id);
-          data.page2 = data.page2.map(t => t.id === id ? { ...t, traite: e.target.checked } : t);
+          setChargeState(id, activeMonth, 'traite', e.target.checked);
           save();
         });
       });

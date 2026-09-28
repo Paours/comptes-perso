@@ -690,28 +690,19 @@
       });
 
       if (currentPage === 'page1') {
-        // --- CALCUL EXACT DU SOLDE DE LA DERNIÈRE LIGNE DU MOIS PRÉCÉDENT ---
+        // --- REPORT DE FIN DE MOIS DU MOIS PRÉCÉDENT (Onglet 1 uniquement) ---
         let soldeInitialReporte = 0;
         if (selectedMonth !== 'ALL') {
-          // Trouver le mois immédiatement précédent
-          const [yr, mo] = selectedMonth.split('-').map(Number);
-          const prevDate = new Date(yr, mo - 2, 1);
-          const prevMonthKey = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
-
-          // Calculer le solde de fin de ce mois précédent (compte courant uniquement)
-          let runningPrev = 0;
           const sortedAllOps = [...data.page1].sort((a, b) => new Date(a.date) - new Date(b.date));
-          
           sortedAllOps.forEach(t => {
-            if (t.date && t.date.substring(0, 7) <= prevMonthKey) {
+            if (t.date && t.date.substring(0, 7) < selectedMonth) {
               const delta = t.versement - t.retrait;
               const isReserve = t.isReserve || Boolean(t.reserveCategory);
               if (t.pointage && !isReserve) {
-                runningPrev += delta;
+                soldeInitialReporte += delta;
               }
             }
           });
-          soldeInitialReporte = runningPrev;
         }
 
         let runningCompteCourant = soldeInitialReporte + chargesFixesPointesCompte;
@@ -720,7 +711,7 @@
           <tr>
             <td style="color: var(--text-muted)">-</td>
             <td style="color: var(--text-muted)">-</td>
-            <td><strong>Solde initial (Report dernière ligne mois précédent)</strong></td>
+            <td><strong>Solde initial (Report mois précédent)</strong></td>
             <td class="amount">-</td>
             <td class="amount">-</td>
             <td class="amount ${soldeInitialReporte < 0 ? 'negative' : ''}"><strong>${soldeInitialReporte.toFixed(2)} €</strong></td>

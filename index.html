@@ -652,26 +652,15 @@
       const summaryBar = document.getElementById('summary-bar');
       tableBody.innerHTML = '';
 
+      let soldeCompte = 0;
       let totalReserves = 0;
       const soldesParReserve = {};
       (data.reservesCategories || ['Vacances', 'Noël']).forEach(cat => soldesParReserve[cat] = 0);
 
       const activeMonth = selectedMonth === 'ALL' ? currentYYYYMM : selectedMonth;
 
-      // 1. Accumulation globale de TOUTES les réserves pointées (toutes dates confondues)
-      (data.page1 || []).filter(t => t.pointage).forEach(t => {
-        const isReserve = t.isReserve || Boolean(t.reserveCategory);
-        if (isReserve) {
-          const delta = t.versement - t.retrait;
-          const category = t.reserveCategory || 'Réserve';
-          totalReserves += delta;
-          if (!soldesParReserve[category]) soldesParReserve[category] = 0;
-          soldesParReserve[category] += delta;
-        }
-      });
+      let chargesFixesPointes = 0;
 
-      // 2. Calcul des charges fixes pointées pour l'onglet Charges Fixes
-      let chargesFixesPointesCompte = 0;
       data.page2.forEach(t => {
         const cState = getChargeState(t.id, activeMonth);
         if (cState.pointage) {
@@ -684,14 +673,12 @@
             if (!soldesParReserve[category]) soldesParReserve[category] = 0;
             soldesParReserve[category] += delta;
           } else {
-            chargesFixesPointesCompte += delta;
+            chargesFixesPointes += delta;
           }
         }
       });
 
       if (currentPage === 'page1') {
-        let runningCompteCourant = chargesFixesPointesCompte;
-
         tableBody.innerHTML += `
           <tr>
             <td style="color: var(--text-muted)">-</td>
@@ -706,14 +693,15 @@
         `;
 
         if (data.page2.length > 0) {
+          soldeCompte += chargesFixesPointes;
           tableBody.innerHTML += `
             <tr class="row-charges-total">
               <td style="color: var(--text-muted)">—</td>
               <td style="color: var(--text-muted)">—</td>
               <td><strong style="color: #f59e0b;">Charges Fixes Pointées (Feuille 2)</strong></td>
-              <td class="amount">${chargesFixesPointesCompte < 0 ? '<span class="amount-minus">' + chargesFixesPointesCompte.toFixed(2) + ' €</span>' : '-'}</td>
-              <td class="amount">${chargesFixesPointesCompte > 0 ? '<span class="amount-plus">+' + chargesFixesPointesCompte.toFixed(2) + ' €</span>' : '-'}</td>
-              <td class="amount ${runningCompteCourant < 0 ? 'negative' : ''}">${runningCompteCourant.toFixed(2)} €</td>
+              <td class="amount">${chargesFixesPointes < 0 ? '<span class="amount-minus">' + chargesFixesPointes.toFixed(2) + ' €</span>' : '-'}</td>
+              <td class="amount">${chargesFixesPointes > 0 ? '<span class="amount-plus">+' + chargesFixesPointes.toFixed(2) + ' €</span>' : '-'}</td>
+              <td class="amount ${soldeCompte < 0 ? 'negative' : ''}">${soldeCompte.toFixed(2)} €</td>
               <td class="center">-</td>
               <td></td>
             </tr>
@@ -725,9 +713,16 @@
         sortedOps.forEach(t => {
           const delta = t.versement - t.retrait;
           const isReserve = t.isReserve || Boolean(t.reserveCategory);
+          const category = t.reserveCategory || 'Réserve';
 
-          if (t.pointage && !isReserve) {
-            runningCompteCourant += delta;
+          if (t.pointage) {
+            if (isReserve) {
+              totalReserves += delta;
+              if (!soldesParReserve[category]) soldesParReserve[category] = 0;
+              soldesParReserve[category] += delta;
+            } else {
+              soldeCompte += delta;
+            }
           }
 
           const itemMonthKey = t.date ? t.date.substring(0, 7) : '';
@@ -741,10 +736,10 @@
           row.innerHTML = `
             <td style="color: var(--text-muted)">${formatDate(t.date)}</td>
             <td style="color: var(--text-muted)">${t.cheque || '-'}</td>
-            <td>${isReserve ? `<span class="tag-reserve">${t.reserveCategory || 'Réserve'}</span>` : ''} <strong>${t.ordre}</strong></td>
+            <td>${isReserve ? `<span class="tag-reserve">${category}</span>` : ''} <strong>${t.ordre}</strong></td>
             <td class="amount">${t.retrait > 0 ? '<span class="amount-minus">-' + t.retrait.toFixed(2) + ' €</span>' : ''}</td>
             <td class="amount">${t.versement > 0 ? '<span class="amount-plus">+' + t.versement.toFixed(2) + ' €</span>' : ''}</td>
-            <td class="amount ${runningCompteCourant < 0 ? 'negative' : ''}">${runningCompteCourant.toFixed(2)} €</td>
+            <td class="amount ${soldeCompte < 0 ? 'negative' : ''}">${soldeCompte.toFixed(2)} €</td>
             <td class="center">
               <input type="checkbox" class="chk-pointage" data-id="${t.id}" ${t.pointage ? 'checked' : ''}>
             </td>
@@ -755,7 +750,7 @@
           tableBody.appendChild(row);
         });
 
-        const soldeTotalGlobal = runningCompteCourant + totalReserves;
+        const soldeTotalGlobal = soldeCompte + totalReserves;
 
         let reservesCardsHtml = '';
         Object.entries(soldesParReserve).forEach(([cat, solde]) => {
@@ -770,7 +765,7 @@
         summaryBar.innerHTML = `
           <div class="summary-card">
             <div class="summary-title">Solde Compte Courant</div>
-            <div class="summary-val ${runningCompteCourant < 0 ? 'negative' : ''}">${runningCompteCourant.toFixed(2)} €</div>
+            <div class="summary-val ${soldeCompte < 0 ? 'negative' : ''}">${soldeCompte.toFixed(2)} €</div>
           </div>
           ${reservesCardsHtml}
           <div class="summary-card">

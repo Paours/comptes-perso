@@ -412,6 +412,8 @@
         `;
       } else {
         const allChecked = data.page2.length > 0 && data.page2.every(t => t.pointage);
+        const allProcessed = data.page2.length > 0 && data.page2.every(t => t.traite);
+
         formFields.innerHTML = `
           <input type="text" id="cheque" placeholder="Chèque (optionnel)">
           <input type="text" id="ordre" placeholder="Nom de l'opération" required>
@@ -431,7 +433,10 @@
           <th class="amount">Charge (-)</th>
           <th class="amount">Revenu (+)</th>
           <th class="center">
-            Tout <input type="checkbox" id="toggle-all-charges" ${allChecked ? 'checked' : ''}>
+            Inclus <input type="checkbox" id="toggle-all-charges" ${allChecked ? 'checked' : ''}>
+          </th>
+          <th class="center">
+            Traité <input type="checkbox" id="toggle-all-traite" ${allProcessed ? 'checked' : ''}>
           </th>
           <th class="center">Action</th>
         `;
@@ -440,6 +445,14 @@
         if (toggleAll) {
           toggleAll.addEventListener('change', (e) => {
             data.page2 = data.page2.map(t => ({ ...t, pointage: e.target.checked }));
+            save();
+          });
+        }
+
+        const toggleAllTraite = document.getElementById('toggle-all-traite');
+        if (toggleAllTraite) {
+          toggleAllTraite.addEventListener('change', (e) => {
+            data.page2 = data.page2.map(t => ({ ...t, traite: e.target.checked }));
             save();
           });
         }
@@ -459,6 +472,7 @@
         retrait: parseFloat(document.getElementById('retrait').value) || 0,
         versement: parseFloat(document.getElementById('versement').value) || 0,
         pointage: false,
+        traite: false,
         isReserve: isReserve,
         reserveCategory: isReserve ? reserveCat : ''
       };
@@ -620,6 +634,9 @@
               <input type="checkbox" class="chk-pointage" data-id="${t.id}" ${t.pointage ? 'checked' : ''}>
             </td>
             <td class="center">
+              <input type="checkbox" class="chk-traite" data-id="${t.id}" ${t.traite ? 'checked' : ''}>
+            </td>
+            <td class="center">
               <button class="btn-del" data-id="${t.id}">✕</button>
             </td>
           `;
@@ -650,6 +667,14 @@
         chk.addEventListener('change', (e) => {
           const id = Number(e.target.dataset.id);
           data[currentPage] = data[currentPage].map(t => t.id === id ? { ...t, pointage: e.target.checked } : t);
+          save();
+        });
+      });
+
+      document.querySelectorAll('.chk-traite').forEach(chk => {
+        chk.addEventListener('change', (e) => {
+          const id = Number(e.target.dataset.id);
+          data.page2 = data.page2.map(t => t.id === id ? { ...t, traite: e.target.checked } : t);
           save();
         });
       });

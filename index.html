@@ -516,9 +516,7 @@
 
       page1: [],
 
-      page2: [],
-
-      monthlyChargesState: {},
+      page2: {}, // Stocké par mois (ex: { "2026-10": [...] })
 
       reservesCategories: [
         'Vacances',
@@ -543,6 +541,28 @@
 
 
     /* =========================================================
+       FONCTIONS D'AIDE CHARGES FIXES PAR MOIS
+    ========================================================= */
+
+    function getCurrentPage2() {
+      const activeMonth =
+        selectedMonth === 'ALL'
+          ? currentYYYYMM
+          : selectedMonth;
+
+      if (!data.page2) {
+        data.page2 = {};
+      }
+
+      if (!data.page2[activeMonth]) {
+        data.page2[activeMonth] = [];
+      }
+
+      return data.page2[activeMonth];
+    }
+
+
+    /* =========================================================
        BACKUP LOCAL
     ========================================================= */
 
@@ -557,11 +577,20 @@
 
       try {
 
-        data =
+        let parsed =
           JSON.parse(localBackup);
 
-        if (!data.monthlyChargesState) {
-          data.monthlyChargesState = {};
+        // Migration si l'ancienne structure était un tableau global
+        if (Array.isArray(parsed.page2)) {
+          const converted = {};
+          converted[currentYYYYMM] = parsed.page2;
+          parsed.page2 = converted;
+        }
+
+        data = parsed;
+
+        if (!data.page2) {
+          data.page2 = {};
         }
 
         updateMonthFilterOptions();
@@ -629,6 +658,15 @@
 
         if (val) {
 
+          let p2 = val.page2;
+
+          // Migration si l'ancienne structure était un tableau global
+          if (Array.isArray(p2)) {
+            const converted = {};
+            converted[currentYYYYMM] = p2;
+            p2 = converted;
+          }
+
           data = {
 
             page1:
@@ -637,12 +675,9 @@
                 : [],
 
             page2:
-              Array.isArray(val.page2)
-                ? val.page2
-                : [],
-
-            monthlyChargesState:
-              val.monthlyChargesState || {},
+              p2 && typeof p2 === 'object' && !Array.isArray(p2)
+                ? p2
+                : {},
 
             reservesCategories:
               Array.isArray(
@@ -669,101 +704,6 @@
 
       }
     );
-
-
-    /* =========================================================
-       ETAT CHARGES FIXES
-    ========================================================= */
-
-    function getChargeState(
-      chargeId,
-      monthKey
-    ) {
-
-      const activeMonth =
-        monthKey === 'ALL'
-          ? currentYYYYMM
-          : monthKey;
-
-
-      if (
-        data.monthlyChargesState &&
-        data.monthlyChargesState[activeMonth] &&
-        data.monthlyChargesState[activeMonth][chargeId]
-      ) {
-
-        return data
-          .monthlyChargesState[activeMonth][chargeId];
-
-      }
-
-
-      const charge =
-        (data.page2 || []).find(
-          c => c.id === chargeId
-        );
-
-
-      return {
-
-        pointage:
-          charge
-            ? Boolean(charge.pointage)
-            : false,
-
-        traite:
-          charge
-            ? Boolean(charge.traite)
-            : false
-
-      };
-
-    }
-
-
-    function setChargeState(
-      chargeId,
-      monthKey,
-      key,
-      value
-    ) {
-
-      const activeMonth =
-        monthKey === 'ALL'
-          ? currentYYYYMM
-          : monthKey;
-
-
-      if (!data.monthlyChargesState) {
-        data.monthlyChargesState = {};
-      }
-
-
-      if (
-        !data.monthlyChargesState[activeMonth]
-      ) {
-
-        data.monthlyChargesState[activeMonth] = {};
-
-      }
-
-
-      const current =
-        getChargeState(
-          chargeId,
-          activeMonth
-        );
-
-
-      current[key] =
-        value;
-
-
-      data
-        .monthlyChargesState[activeMonth][chargeId]
-        = current;
-
-    }
 
 
     /* =========================================================
@@ -880,7 +820,7 @@
 
 
     /* =========================================================
-       RESET CHARGES
+       RESET CHARGES DU MOIS
     ========================================================= */
 
     document
@@ -897,32 +837,20 @@
 
           if (
             confirm(
-              `Voulez-vous réinitialiser les cases de l'onglet Charges Fixes pour le mois sélectionné (${activeMonth}) ?`
+              `Voulez-vous réinitialiser (cocher tous comme inclus) les charges fixes pour le mois sélectionné (${activeMonth}) ?`
             )
           ) {
 
-            if (!data.monthlyChargesState) {
-              data.monthlyChargesState = {};
+            if (!data.page2) {
+              data.page2 = {};
             }
 
-
-            data.monthlyChargesState[activeMonth] = {};
-
-
-            (data.page2 || [])
-              .forEach(
-                t => {
-
-                  data
-                    .monthlyChargesState[activeMonth][t.id]
-                    = {
-                      pointage: true,
-                      traite: false
-                    };
-
-                }
-              );
-
+            if (data.page2[activeMonth]) {
+              data.page2[activeMonth].forEach(t => {
+                t.pointage = true;
+                t.traite = false;
+              });
+            }
 
             save();
 
@@ -1034,7 +962,7 @@
       /* Mois des charges fixes */
 
       Object.keys(
-        data.monthlyChargesState || {}
+        data.page2 || {}
       )
       .forEach(
         monthKey => {
@@ -1322,31 +1250,21 @@
 
       } else {
 
-        const activeMonth =
-          selectedMonth === 'ALL'
-            ? currentYYYYMM
-            : selectedMonth;
+        const currentCharges =
+          getCurrentPage2();
 
 
         const allChecked =
-          data.page2.length > 0 &&
-          data.page2.every(
-            t =>
-              getChargeState(
-                t.id,
-                activeMonth
-              ).pointage
+          currentCharges.length > 0 &&
+          currentCharges.every(
+            t => t.pointage
           );
 
 
         const allProcessed =
-          data.page2.length > 0 &&
-          data.page2.every(
-            t =>
-              getChargeState(
-                t.id,
-                activeMonth
-              ).traite
+          currentCharges.length > 0 &&
+          currentCharges.every(
+            t => t.traite
           );
 
 
@@ -1450,16 +1368,9 @@
             'change',
             (e) => {
 
-              data.page2.forEach(
+              getCurrentPage2().forEach(
                 t => {
-
-                  setChargeState(
-                    t.id,
-                    activeMonth,
-                    'pointage',
-                    e.target.checked
-                  );
-
+                  t.pointage = e.target.checked;
                 }
               );
 
@@ -1483,16 +1394,9 @@
             'change',
             (e) => {
 
-              data.page2.forEach(
+              getCurrentPage2().forEach(
                 t => {
-
-                  setChargeState(
-                    t.id,
-                    activeMonth,
-                    'traite',
-                    e.target.checked
-                  );
-
+                  t.traite = e.target.checked;
                 }
               );
 
@@ -1562,9 +1466,7 @@
               ) || 0,
 
             pointage:
-              currentPage === 'page2'
-                ? true
-                : false,
+              true,
 
             traite:
               false,
@@ -1592,37 +1494,16 @@
                 .toISOString()
                 .split('T')[0];
 
-          }
+            newEntry.pointage = false;
 
-
-          data[currentPage].push(
-            newEntry
-          );
-
-
-          if (
-            currentPage === 'page2'
-          ) {
-
-            const activeMonth =
-              selectedMonth === 'ALL'
-                ? currentYYYYMM
-                : selectedMonth;
-
-
-            setChargeState(
-              newEntry.id,
-              activeMonth,
-              'pointage',
-              true
+            data[currentPage].push(
+              newEntry
             );
 
+          } else {
 
-            setChargeState(
-              newEntry.id,
-              activeMonth,
-              'traite',
-              false
+            getCurrentPage2().push(
+              newEntry
             );
 
           }
@@ -1787,7 +1668,7 @@
 
 
       Object.keys(
-        data.monthlyChargesState || {}
+        data.page2 || {}
       )
       .forEach(
         monthKey => {
@@ -1812,44 +1693,42 @@
         .forEach(
           monthKey => {
 
-            (data.page2 || [])
-              .forEach(
-                t => {
+            const monthCharges =
+              (data.page2 && data.page2[monthKey])
+                ? data.page2[monthKey]
+                : [];
 
-                  const state =
-                    getChargeState(
-                      t.id,
-                      monthKey
+
+            monthCharges.forEach(
+              t => {
+
+                if (
+                  t.pointage
+                ) {
+
+                  const isReserve =
+                    t.isReserve ||
+                    Boolean(
+                      t.reserveCategory
                     );
 
 
-                  if (
-                    state.pointage
-                  ) {
-
-                    const isReserve =
-                      t.isReserve ||
-                      Boolean(
-                        t.reserveCategory
-                      );
-
-
-                    if (isReserve) {
-                      if (t.versement > 0) {
-                        balance -= Number(t.versement) || 0;
-                      }
-                    } else {
-
-                      balance +=
-                        (Number(t.versement) || 0) -
-                        (Number(t.retrait) || 0);
-
+                  if (isReserve) {
+                    if (t.versement > 0) {
+                      balance -= Number(t.versement) || 0;
                     }
+                  } else {
+
+                    balance +=
+                      (Number(t.versement) || 0) -
+                      (Number(t.retrait) || 0);
 
                   }
 
                 }
-              );
+
+              }
+            );
 
           }
         );
@@ -1969,18 +1848,15 @@
         0;
 
 
-      data.page2.forEach(
+      const currentCharges =
+        getCurrentPage2();
+
+
+      currentCharges.forEach(
         t => {
 
-          const cState =
-            getChargeState(
-              t.id,
-              activeMonth
-            );
-
-
           if (
-            cState.pointage
+            t.pointage
           ) {
 
             const isReserve =
@@ -2004,7 +1880,6 @@
                   soldesParReserve[category] = 0;
                 }
                 soldesParReserve[category] += val;
-                // Le versement vers la réserve est débité du compte courant
                 chargesFixesPointesCompte -= val;
               }
 
@@ -2133,7 +2008,7 @@
 
 
         if (
-          data.page2.length > 0
+          currentCharges.length > 0
         ) {
 
           tableBody.innerHTML += `
@@ -2500,15 +2375,8 @@
 
       } else {
 
-        data.page2.forEach(
+        currentCharges.forEach(
           t => {
-
-            const cState =
-              getChargeState(
-                t.id,
-                activeMonth
-              );
-
 
             const isReserve =
               t.isReserve ||
@@ -2593,7 +2461,7 @@
                   type="checkbox"
                   class="chk-pointage"
                   data-id="${t.id}"
-                  ${cState.pointage ? 'checked' : ''}
+                  ${t.pointage ? 'checked' : ''}
                 >
 
               </td>
@@ -2604,7 +2472,7 @@
                   type="checkbox"
                   class="chk-traite"
                   data-id="${t.id}"
-                  ${cState.traite ? 'checked' : ''}
+                  ${t.traite ? 'checked' : ''}
                 >
 
               </td>
@@ -2632,7 +2500,7 @@
 
 
         const totalRetraits =
-          data.page2.reduce(
+          currentCharges.reduce(
             (acc, t) =>
               acc +
               (Number(t.retrait) || 0),
@@ -2641,7 +2509,7 @@
 
 
         const totalVersements =
-          data.page2.reduce(
+          currentCharges.reduce(
             (acc, t) =>
               acc +
               (Number(t.versement) || 0),
@@ -2650,7 +2518,7 @@
 
 
         const netChargesTotal =
-          data.page2.reduce(
+          currentCharges.reduce(
             (total, t) =>
               total +
               (
@@ -2750,12 +2618,15 @@
 
                 } else {
 
-                  setChargeState(
-                    id,
-                    activeMonth,
-                    'pointage',
-                    e.target.checked
-                  );
+                  const targetCharge =
+                    currentCharges.find(
+                      t => t.id === id
+                    );
+
+                  if (targetCharge) {
+                    targetCharge.pointage =
+                      e.target.checked;
+                  }
 
                 }
 
@@ -2786,12 +2657,15 @@
                   );
 
 
-                setChargeState(
-                  id,
-                  activeMonth,
-                  'traite',
-                  e.target.checked
-                );
+                const targetCharge =
+                  currentCharges.find(
+                    t => t.id === id
+                  );
+
+                if (targetCharge) {
+                  targetCharge.traite =
+                    e.target.checked;
+                }
 
 
                 save();
@@ -2820,11 +2694,23 @@
                   );
 
 
-                data[currentPage] =
-                  data[currentPage]
-                    .filter(
+                if (
+                  currentPage === 'page1'
+                ) {
+
+                  data.page1 =
+                    data.page1.filter(
                       t => t.id !== id
                     );
+
+                } else {
+
+                  data.page2[activeMonth] =
+                    currentCharges.filter(
+                      t => t.id !== id
+                    );
+
+                }
 
 
                 save();

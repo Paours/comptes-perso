@@ -541,7 +541,7 @@
 
 
     /* =========================================================
-       FONCTIONS D'AIDE CHARGES FIXES PAR MOIS
+       FONCTIONS D'AIDE CHARGES FIXES PAR MOIS (AVEC HERITAGE INTELLIGENT)
     ========================================================= */
 
     function getCurrentPage2() {
@@ -554,8 +554,34 @@
         data.page2 = {};
       }
 
+      // Si le mois n'a pas encore de charges enregistrées, on récupère le mois précédent le plus proche pour pré-remplir automatiquement
       if (!data.page2[activeMonth]) {
-        data.page2[activeMonth] = [];
+        const existingMonths = Object.keys(data.page2).filter(m => m !== 'ALL' && m < activeMonth).sort();
+        
+        if (existingMonths.length > 0) {
+          const lastMonth = existingMonths[existingMonths.length - 1];
+          // Copie indépendante des charges du mois précédent pour éviter de tout retaper
+          data.page2[activeMonth] = JSON.parse(JSON.stringify(data.page2[lastMonth])).map(t => ({
+            ...t,
+            id: Date.now() + Math.random() * 1000,
+            pointage: true,
+            traite: false
+          }));
+        } else {
+          // S'il n'y a pas de mois précédent mais qu'il existe un autre mois quelque part, on prend le premier dispo
+          const anyMonths = Object.keys(data.page2).filter(m => m !== 'ALL').sort();
+          if (anyMonths.length > 0) {
+            const firstMonth = anyMonths[0];
+            data.page2[activeMonth] = JSON.parse(JSON.stringify(data.page2[firstMonth])).map(t => ({
+              ...t,
+              id: Date.now() + Math.random() * 1000,
+              pointage: true,
+              traite: false
+            }));
+          } else {
+            data.page2[activeMonth] = [];
+          }
+        }
       }
 
       return data.page2[activeMonth];
@@ -580,7 +606,6 @@
         let parsed =
           JSON.parse(localBackup);
 
-        // Migration si l'ancienne structure était un tableau global
         if (Array.isArray(parsed.page2)) {
           const converted = {};
           converted[currentYYYYMM] = parsed.page2;
@@ -660,7 +685,6 @@
 
           let p2 = val.page2;
 
-          // Migration si l'ancienne structure était un tableau global
           if (Array.isArray(p2)) {
             const converted = {};
             converted[currentYYYYMM] = p2;

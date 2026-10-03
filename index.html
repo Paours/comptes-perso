@@ -1678,11 +1678,6 @@
 
     /* =========================================================
        CALCUL DU SOLDE FINAL D'UN MOIS
-       
-       CETTE FONCTION EST LA CORRECTION PRINCIPALE.
-       
-       Elle calcule le solde cumulé du compte courant
-       jusqu'à la fin du mois demandé.
     ========================================================= */
 
     function getCompteCourantBalanceAtMonth(
@@ -1733,19 +1728,21 @@
               );
 
 
-            /*
-             * Les réserves ne modifient pas
-             * le solde du compte courant.
-             */
-
             if (
-              t.pointage &&
-              !isReserve
+              t.pointage
             ) {
 
-              balance +=
-                (Number(t.versement) || 0) -
-                (Number(t.retrait) || 0);
+              if (isReserve) {
+                if (t.versement > 0) {
+                  balance -= Number(t.versement) || 0;
+                }
+              } else {
+
+                balance +=
+                  (Number(t.versement) || 0) -
+                  (Number(t.retrait) || 0);
+
+              }
 
             }
 
@@ -1757,9 +1754,6 @@
 
       /* -------------------------------------------------------
          CHARGES FIXES
-         
-         On récupère tous les mois existants jusqu'au
-         mois demandé.
          ------------------------------------------------------- */
 
       const monthsToCalculate =
@@ -1770,8 +1764,6 @@
         targetMonthKey
       );
 
-
-      /* Mois présents dans les opérations */
 
       sortedOps.forEach(
         t => {
@@ -1794,8 +1786,6 @@
       );
 
 
-      /* Mois présents dans les charges fixes */
-
       Object.keys(
         data.monthlyChargesState || {}
       )
@@ -1816,10 +1806,6 @@
         }
       );
 
-
-      /*
-       * On applique les charges fixes mois par mois.
-       */
 
       [...monthsToCalculate]
         .sort()
@@ -1848,9 +1834,11 @@
                       );
 
 
-                    if (
-                      !isReserve
-                    ) {
+                    if (isReserve) {
+                      if (t.versement > 0) {
+                        balance -= Number(t.versement) || 0;
+                      }
+                    } else {
 
                       balance +=
                         (Number(t.versement) || 0) -
@@ -1938,32 +1926,28 @@
 
             if (isReserve) {
 
-              const delta =
-                (Number(t.versement) || 0) -
-                (Number(t.retrait) || 0);
-
-
               const category =
                 t.reserveCategory ||
                 'Réserve';
 
 
-              totalReserves +=
-                delta;
-
-
-              if (
-                !soldesParReserve[category]
-              ) {
-
-                soldesParReserve[category] =
-                  0;
-
+              if (t.versement > 0) {
+                const val = Number(t.versement) || 0;
+                totalReserves += val;
+                if (!soldesParReserve[category]) {
+                  soldesParReserve[category] = 0;
+                }
+                soldesParReserve[category] += val;
               }
 
-
-              soldesParReserve[category] +=
-                delta;
+              if (t.retrait > 0) {
+                const val = Number(t.retrait) || 0;
+                totalReserves -= val;
+                if (!soldesParReserve[category]) {
+                  soldesParReserve[category] = 0;
+                }
+                soldesParReserve[category] -= val;
+              }
 
             }
 
@@ -1999,11 +1983,6 @@
             cState.pointage
           ) {
 
-            const delta =
-              (Number(t.versement) || 0) -
-              (Number(t.retrait) || 0);
-
-
             const isReserve =
               t.isReserve ||
               Boolean(
@@ -2018,27 +1997,31 @@
 
             if (isReserve) {
 
-              totalReserves +=
-                delta;
-
-
-              if (
-                !soldesParReserve[category]
-              ) {
-
-                soldesParReserve[category] =
-                  0;
-
+              if (t.versement > 0) {
+                const val = Number(t.versement) || 0;
+                totalReserves += val;
+                if (!soldesParReserve[category]) {
+                  soldesParReserve[category] = 0;
+                }
+                soldesParReserve[category] += val;
+                // Le versement vers la réserve est débité du compte courant
+                chargesFixesPointesCompte -= val;
               }
 
-
-              soldesParReserve[category] +=
-                delta;
+              if (t.retrait > 0) {
+                const val = Number(t.retrait) || 0;
+                totalReserves -= val;
+                if (!soldesParReserve[category]) {
+                  soldesParReserve[category] = 0;
+                }
+                soldesParReserve[category] -= val;
+              }
 
             } else {
 
               chargesFixesPointesCompte +=
-                delta;
+                (Number(t.versement) || 0) -
+                (Number(t.retrait) || 0);
 
             }
 
@@ -2055,12 +2038,6 @@
       if (
         currentPage === 'page1'
       ) {
-
-        /*
-         * -----------------------------------------------------
-         * REPORT DU MOIS PRECEDENT
-         * -----------------------------------------------------
-         */
 
         let soldeInitialReporte =
           0;
@@ -2079,14 +2056,6 @@
               .map(Number);
 
 
-          /*
-           * Calcul du mois précédent.
-           *
-           * Exemple :
-           * 2026-10 -> 2026-09
-           * 2026-01 -> 2025-12
-           */
-
           const previousDate =
             new Date(
               year,
@@ -2101,11 +2070,6 @@
             ).padStart(2, '0')}`;
 
 
-          /*
-           * LE SOLDE FINAL DU MOIS PRECEDENT
-           * DEVIENT LE SOLDE INITIAL DU MOIS ACTUEL.
-           */
-
           soldeInitialReporte =
             getCompteCourantBalanceAtMonth(
               previousMonthKey
@@ -2114,22 +2078,10 @@
         }
 
 
-        /*
-         * Le mois actuel commence donc avec
-         * le solde final du mois précédent.
-         *
-         * Ensuite on ajoute les charges fixes
-         * du mois actuel.
-         */
-
         let runningCompteCourant =
           soldeInitialReporte +
           chargesFixesPointesCompte;
 
-
-        /* -----------------------------------------------------
-           LIGNE DE REPORT
-           ----------------------------------------------------- */
 
         tableBody.innerHTML += `
 
@@ -2179,10 +2131,6 @@
 
         `;
 
-
-        /* -----------------------------------------------------
-           CHARGES FIXES
-           ----------------------------------------------------- */
 
         if (
           data.page2.length > 0
@@ -2257,10 +2205,6 @@
         }
 
 
-        /* -----------------------------------------------------
-           OPERATIONS DU MOIS
-           ----------------------------------------------------- */
-
         const sortedOps =
           [...data.page1]
             .sort(
@@ -2286,11 +2230,6 @@
               );
 
 
-            const delta =
-              (Number(t.versement) || 0) -
-              (Number(t.retrait) || 0);
-
-
             const isReserve =
               t.isReserve ||
               Boolean(
@@ -2298,22 +2237,20 @@
               );
 
 
-            /*
-             * SEULEMENT les opérations du mois affiché
-             * sont ajoutées ici.
-             *
-             * Les mois précédents sont déjà compris
-             * dans soldeInitialReporte.
-             */
-
             if (
               t.pointage &&
-              !isReserve &&
               itemMonthKey === selectedMonth
             ) {
 
-              runningCompteCourant +=
-                delta;
+              if (isReserve) {
+                if (t.versement > 0) {
+                  runningCompteCourant -= Number(t.versement) || 0;
+                }
+              } else {
+                runningCompteCourant +=
+                  (Number(t.versement) || 0) -
+                  (Number(t.retrait) || 0);
+              }
 
             }
 
@@ -2435,10 +2372,6 @@
         );
 
 
-        /* -----------------------------------------------------
-           CALCUL DU SOLDE FINAL DU MOIS
-           ----------------------------------------------------- */
-
         let totalCompteCourantFinal =
           soldeInitialReporte +
           chargesFixesPointesCompte;
@@ -2462,27 +2395,23 @@
 
             if (
               t.pointage &&
-              !isReserve &&
               itemMonthKey === selectedMonth
             ) {
 
-              totalCompteCourantFinal +=
-                (Number(t.versement) || 0) -
-                (Number(t.retrait) || 0);
+              if (isReserve) {
+                if (t.versement > 0) {
+                  totalCompteCourantFinal -= Number(t.versement) || 0;
+                }
+              } else {
+                totalCompteCourantFinal +=
+                  (Number(t.versement) || 0) -
+                  (Number(t.retrait) || 0);
+              }
 
             }
 
           }
         );
-
-
-        /*
-         * IMPORTANT :
-         *
-         * totalCompteCourantFinal est maintenant
-         * exactement le solde qui sera reporté
-         * au mois suivant.
-         */
 
 
         const soldeTotalGlobal =
@@ -2570,10 +2499,6 @@
 
 
       } else {
-
-        /* =====================================================
-           PAGE 2 : CHARGES FIXES
-        ===================================================== */
 
         data.page2.forEach(
           t => {
@@ -2788,10 +2713,6 @@
       }
 
 
-      /* =======================================================
-         CHECKBOX POINTAGE
-      ======================================================= */
-
       document
         .querySelectorAll(
           '.chk-pointage'
@@ -2848,10 +2769,6 @@
         );
 
 
-      /* =======================================================
-         CHECKBOX TRAITE
-      ======================================================= */
-
       document
         .querySelectorAll(
           '.chk-traite'
@@ -2885,10 +2802,6 @@
           }
         );
 
-
-      /* =======================================================
-         SUPPRESSION
-      ======================================================= */
 
       document
         .querySelectorAll(

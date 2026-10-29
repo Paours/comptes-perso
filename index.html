@@ -1858,13 +1858,23 @@
         );
 
 
+      const activeMonth =
+        selectedMonth === 'ALL'
+          ? currentYYYYMM
+          : selectedMonth;
+
+
       /* -------------------------------------------------------
          RESERVES ISSUES DES CHARGES FIXES
-         Les revenus/dépenses affectés à une réserve sont cumulés
-         dans les encarts de réserve, sans augmenter le solde global.
+         On ne prend en compte que les mouvements jusqu'au mois affiché :
+         les ajouts des mois suivants ne modifient donc pas le solde
+         historique des mois précédents.
          ------------------------------------------------------- */
 
-      Object.values(data.page2 || {}).forEach(monthCharges => {
+      Object.entries(data.page2 || {})
+        .filter(([month]) => month !== 'ALL' && month <= activeMonth)
+        .sort(([monthA], [monthB]) => monthA.localeCompare(monthB))
+        .forEach(([, monthCharges]) => {
         if (!Array.isArray(monthCharges)) return;
 
         monthCharges.forEach(t => {
@@ -1894,12 +1904,6 @@
           }
         });
       });
-
-
-      const activeMonth =
-        selectedMonth === 'ALL'
-          ? currentYYYYMM
-          : selectedMonth;
 
 
       /* -------------------------------------------------------

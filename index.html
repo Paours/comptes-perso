@@ -1858,6 +1858,44 @@
         );
 
 
+      /* -------------------------------------------------------
+         RESERVES ISSUES DES CHARGES FIXES
+         Les revenus/dépenses affectés à une réserve sont cumulés
+         dans les encarts de réserve, sans augmenter le solde global.
+         ------------------------------------------------------- */
+
+      Object.values(data.page2 || {}).forEach(monthCharges => {
+        if (!Array.isArray(monthCharges)) return;
+
+        monthCharges.forEach(t => {
+          if (!t.pointage) return;
+
+          const isReserve =
+            t.isReserve || Boolean(t.reserveCategory);
+
+          if (!isReserve) return;
+
+          const category = t.reserveCategory || 'Réserve';
+          if (!Object.prototype.hasOwnProperty.call(soldesParReserve, category)) {
+            soldesParReserve[category] = 0;
+          }
+
+          const versement = Number(t.versement) || 0;
+          const retrait = Number(t.retrait) || 0;
+
+          if (versement > 0) {
+            totalReserves += versement;
+            soldesParReserve[category] += versement;
+          }
+
+          if (retrait > 0) {
+            totalReserves -= retrait;
+            soldesParReserve[category] -= retrait;
+          }
+        });
+      });
+
+
       const activeMonth =
         selectedMonth === 'ALL'
           ? currentYYYYMM
@@ -1898,23 +1936,13 @@
             if (isReserve) {
 
               if (t.versement > 0) {
-                const val = Number(t.versement) || 0;
-                totalReserves += val;
-                if (!soldesParReserve[category]) {
-                  soldesParReserve[category] = 0;
-                }
-                soldesParReserve[category] += val;
-                chargesFixesPointesCompte -= val;
+                // Le revenu alimente la réserve, mais est déduit du compte courant.
+                // Le solde de réserve est calculé séparément sur l'ensemble des mois.
+                chargesFixesPointesCompte -= Number(t.versement) || 0;
               }
 
-              if (t.retrait > 0) {
-                const val = Number(t.retrait) || 0;
-                totalReserves -= val;
-                if (!soldesParReserve[category]) {
-                  soldesParReserve[category] = 0;
-                }
-                soldesParReserve[category] -= val;
-              }
+              // Un retrait de réserve dans les charges fixes ne modifie pas le compte courant.
+              // Il est déjà pris en compte dans le cumul des réserves ci-dessus.
 
             } else {
 
